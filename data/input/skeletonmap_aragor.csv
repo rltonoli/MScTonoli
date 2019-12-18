@@ -1,0 +1,32 @@
+root,Hips
+hips,Hips
+spine,Spine_Dummy
+spine1,Spine
+spine2,Spine1
+spine3,Spine2
+neck,Neck
+neck1,
+neckup,
+head,Head
+right shoulder,RightShoulder
+right arm,RightArm
+right forearm,RightForeArm
+right hand,RightHand
+right hand thumb,RightHandThumb1
+right hand middle,RightHandMiddle1
+left shoulder,LeftShoulder
+left arm,LeftArm
+left forearm,LeftForeArm
+left hand,LeftHand
+left hand thumb,LeftHandThumb1
+left hand middle,LeftHandMiddle1
+right up leg,RightUpLeg
+right leg,RightLeg
+right foot,RightFoot
+right fore foot,
+right toe base,RightToeBase
+left up leg,LeftUpLeg
+left leg,LeftLeg
+left foot,LeftFoot
+left fore foot,
+left toe base,LeftToeBase
