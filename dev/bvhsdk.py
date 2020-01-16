@@ -780,7 +780,7 @@ class Joints:
 
 
 
-def WriteBVH(animation, path, name='_export', frametime = 0.00833333, refTPose = True):
+def WriteBVH(animation, path, name='_export', frametime = 0.00833333, refTPose = True, writeTranslation=True):
     """
     Create a bvh file with the motion contained in the animation.
     
@@ -798,6 +798,9 @@ def WriteBVH(animation, path, name='_export', frametime = 0.00833333, refTPose =
     
     :type refTPose: bool
     :param refTPose: If True, the first frame of the animation is the input TPose reference
+    
+    :type writeTranslation: bool
+    :param writeTranslation: If True, write translations for every joint. If False, only write translation for the root joint
     """
     path = pathjoin(path, name)
     endsiteflag = False
@@ -827,10 +830,14 @@ def WriteBVH(animation, path, name='_export', frametime = 0.00833333, refTPose =
                         file.write(str.format('%sJOINT %s\n' % (depth*'\t', joint.name)))
                         file.write('%s{\n' % (depth*'\t'))
                         file.write(str.format('%sOFFSET %.5f %.5f %.5f\n' % ((depth+1)*'\t',joint.offset[0],joint.offset[1],joint.offset[2])))
+                        if writeTranslation:
+                            aux_string = str.format("%sCHANNELS 6 Xposition Yposition Zposition " % ((depth+1)*"\t"))
+                        else:
+                            aux_string = str.format("%sCHANNELS 3 " % ((depth+1)*"\t"))
                         if joint.order == 'XYZ':
-                            file.write(str.format("%sCHANNELS 6 Xposition Yposition Zposition Xrotation Yrotation Zrotation\n" % ((depth+1)*"\t")))
+                            file.write(aux_string + "Xrotation Yrotation Zrotation\n")
                         elif joint.order == 'ZXY':
-                            file.write(str.format("%sCHANNELS 6 Xposition Yposition Zposition Zrotation Xrotation Yrotation\n" % ((depth+1)*"\t")))
+                            file.write(aux_string + "Zrotation Xrotation Yrotation\n")
                         else:
                             print('Order is not implemented')
                         if len(joint.endsite) > 0:
@@ -860,10 +867,12 @@ def WriteBVH(animation, path, name='_export', frametime = 0.00833333, refTPose =
                 if refTPose == True:
                     line = []
                     for joint in animation.getlistofjoints():
+                        if writeTranslation or joint==animation.root:
+                            line = line + [joint.tposetrans[0], joint.tposetrans[1], joint.tposetrans[2]]
                         if joint.order=='XYZ':
-                            line = line + [joint.tposetrans[0], joint.tposetrans[1], joint.tposetrans[2], joint.tposerot[0], joint.tposerot[1], joint.tposerot[2]]
+                            line = line + [joint.tposerot[0], joint.tposerot[1], joint.tposerot[2]]
                         elif joint.order=='ZXY':
-                            line = line + [joint.tposetrans[0], joint.tposetrans[1], joint.tposetrans[2], joint.tposerot[2], joint.tposerot[0], joint.tposerot[1]]
+                            line = line + [joint.tposerot[2], joint.tposerot[0], joint.tposerot[1]]
                     string = " ".join(str.format("%.2f"%number) for number in line)
                     file.write(string+'\n')
                     
@@ -871,10 +880,12 @@ def WriteBVH(animation, path, name='_export', frametime = 0.00833333, refTPose =
                 for frame in range(animation.root.translation.shape[0]):
                     line = []
                     for joint in animation.getlistofjoints():
+                        if writeTranslation or joint==animation.root:
+                            line = line + [joint.translation[frame,0], joint.translation[frame,1], joint.translation[frame,2]]
                         if joint.order=='XYZ':
-                            line = line + [joint.translation[frame,0], joint.translation[frame,1], joint.translation[frame,2], joint.rotation[frame,0], joint.rotation[frame,1], joint.rotation[frame,2]]
+                            line = line + [joint.rotation[frame,0], joint.rotation[frame,1], joint.rotation[frame,2]]
                         elif joint.order=='ZXY':
-                            line = line + [joint.translation[frame,0], joint.translation[frame,1], joint.translation[frame,2], joint.rotation[frame,2], joint.rotation[frame,0], joint.rotation[frame,1]]
+                            line = line + [joint.rotation[frame,2], joint.rotation[frame,0], joint.rotation[frame,1]]
                     string = " ".join(str.format("%.2f"%number) for number in line)
                     file.write(string+'\n')
     print('File Saved: %s' % (path+'.bvh'))

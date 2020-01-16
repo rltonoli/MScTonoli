@@ -187,10 +187,14 @@ def MotionRetargeting(sourceAnimationPath, sourceSurfacePath, targetSkeletonPath
     for frame in range(srcAnimation.frames):
         start = time.time()
         PostureInitialization(tgtMap, srcMap, heightRatio, frame, getpositions = False, headAlign = True, spineAlign = False)
-        print('PI: %.4f seconds.' % (time.time()-start))
-        #start = time.time()
+        
+        #TODO: DEBUG
+        # print('PI: %.4f seconds.' % (time.time()-start))
+        
+        
+        #TODO: VERIFICAR SE AINDA PRECISO DISSO
         #print('Starting avatar surface position estimation')
-        # surface.AvatarSurfacePositionEstimation(tgtAnimation, tgtSurface)
+        #surface.AvatarSurfacePositionEstimation(tgtAnimation, tgtSurface)
         #print('Done. %s seconds.' % (time.time()-start))
     
         # if not computeEgo:
@@ -199,23 +203,14 @@ def MotionRetargeting(sourceAnimationPath, sourceSurfacePath, targetSkeletonPath
         #tgtAnimation_onlyInitial = deepcopy(tgtAnimation)
         
         # Calculate egocentric coordinates ############################################
-        #start = time.time()
-        #print('Getting Egocentric coordinates')
-        #egocoord, targets = GetEgocentricCoordinates(mocap, mocapSurface, avatar, avatarSurface)
-        #for frame in range(srcAnimation.frames):
         start = time.time()
         egocoord = egocentriccoord.GetEgocentricCoordinatesTargets(srcAnimation, srcSurface, tgtAnimation, tgtSurface, frame)
-        print('EC: %.4f seconds.' % (time.time()-start))
-        #print('Egocentric coordinates done. %s seconds.' % (time.time()-start))
-    
-        #if not computeIK:
-        #    return tgtAnimation, tgtSurface, srcAnimation, srcSurface, tgtAnimation_onlyInitial, egocoord
-    
-        # Aplica Cinemática Inversa ###################################################
         
-        #start=time.time()
-        #print('Starting IK')
-        #for frame in range(tgtAnimation.frames):
+        #TODO: DEBUG
+        # print('EC: %.4f seconds.' % (time.time()-start))
+
+
+        # Aplica Cinemática Inversa ###################################################
         start = time.time()
         targetRHand = egocoord[0].getTarget(frame)
         targetLHand = egocoord[1].getTarget(frame)
@@ -223,21 +218,25 @@ def MotionRetargeting(sourceAnimationPath, sourceSurfacePath, targetSkeletonPath
         logL = JacLHand.jacobianTranspose(frame=frame, target=targetLHand)
         iklogRHand.append(logR)
         iklogLHand.append(logL)
-        print('IK: %.4f seconds.' % (time.time()-start))
+        
+        #TODO: DEBUG
+        # print('IK: %.4f seconds.' % (time.time()-start))
+        
+        
         # targetRHand = [0,0,0]
         # targetLHand = [0,0,0]
         # if np.mod(frame+1,100) == 0:
         #     print('%i frames done. %s seconds.' % (int((frame+1)/100)*100,time.time()-start))
         #     start=time.tim'e()
     
-    
-        #if not adjustOrientation:
-        #    return tgtAnimation, tgtSurface, srcAnimation, srcSurface, tgtAnimation_onlyInitial, egocoord
-    
         # # Adjust Limb Extremities ##################################################      
         start = time.time()
         egocentriccoord.AdjustExtremityOrientation(tgtAnimation, tgtSurface, egocoord, srcAnimation,frame)
-        print('LE: %.4f seconds.' % (time.time()-start))
+        
+        #TODO: DEBUG
+        #print('LE: %.4f seconds.' % (time.time()-start))
+        
+        
         #egocentriccoord.AdjustExtremityOrientation2(tgtAnimation, srcAnimation)
     
         if np.mod(frame+1,100) == 0:
@@ -257,7 +256,7 @@ def MotionRetargeting(sourceAnimationPath, sourceSurfacePath, targetSkeletonPath
         i = i + 1
         output_filename = of_aux + str(i)
 
-    bvhsdk.WriteBVH(tgtAnimation, currentpath, output_filename,refTPose=True)
+    bvhsdk.WriteBVH(tgtAnimation, currentpath, output_filename, refTPose = True)
     
     # if saveInitAndFull:
     #     output_filename = source_filename[:-4] + '_initialRetarget'

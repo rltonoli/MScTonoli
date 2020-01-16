@@ -1577,7 +1577,9 @@ def GetEgocentricCoordinatesTargets(srcAnim, surfacesrcAnim, tgtAnim, surfacetgt
             if joint == rhand or joint == lhand or joint == rfoot or joint == lfoot:
                 angle,_ = mathutils.angleBetween(normal, jointSurfaceNormal)
                 ego.angle.append(angle)
-        print('    mesh: %.4f seconds.' % (time.time()-start_aux))
+                
+        #TODO: DEBUG
+        #print('    mesh: %.4f seconds.' % (time.time()-start_aux))
 
         start_aux = time.time()
         #Limbs components
@@ -1596,7 +1598,8 @@ def GetEgocentricCoordinatesTargets(srcAnim, surfacesrcAnim, tgtAnim, surfacetgt
             if joint == rhand or joint == lhand or joint == rfoot or joint == lfoot:
                 angle,_ = mathutils.angleBetween(normal, jointSurfaceNormal)
                 ego.angle.append(angle)
-        print('    limb: %.4f seconds.' % (time.time()-start_aux))
+        #TODO: DEBUG
+        # print('    limb: %.4f seconds.' % (time.time()-start_aux))
         
         #Add the ground projection as a reference point
         if joint == rfoot or joint == lfoot:
@@ -1622,8 +1625,9 @@ def GetEgocentricCoordinatesTargets(srcAnim, surfacesrcAnim, tgtAnim, surfacetgt
         #Normaliza a importancia
         sumimp = sum(ego.importance)
         ego.importance = np.asarray([ego.importance[element]/sumimp for element in range(len(ego.importance))])
-
-    print('  get: %.4f seconds.' % (time.time()-start))
+        
+    #TODO: DEBUG
+    # print('  get: %.4f seconds.' % (time.time()-start))
 
     #####################################################################################
     # Desnormalizando a cada frame
@@ -1728,6 +1732,8 @@ def GetEgocentricCoordinatesTargets(srcAnim, surfacesrcAnim, tgtAnim, surfacetgt
 
 #        if frame>200:
 #            return ego.egolist, targets#, taulist, vec_displacement
-    print('  set: %.4f seconds.' % (time.time()-start))
+        
+    #TODO: DEBUG
+    # print('  set: %.4f seconds.' % (time.time()-start))
     return ego.egolist#targets, taulist, vec_displacement
 
