@@ -187,7 +187,7 @@ def PosePlotBonesSurface(joints,bones,surface):
     plt.show()
 
 
-def AnimationSurface(data, listofpoints):
+def AnimationSurface(animation, data, listofpoints):
     """
     Plot animation with surface information
     """
@@ -200,8 +200,11 @@ def AnimationSurface(data, listofpoints):
             line.set_data(x,y)
             line.set_3d_properties(z)
         for scat, point in zip(scatters,listofpoints):
-            scat.set_data([point.position[frame][0]],[point.position[frame][1]])
-            scat.set_3d_properties([point.position[frame][2]])
+            x,y,z = point.getPosition(animation, frame)
+            scat.set_data([x],[y])
+            scat.set_3d_properties([z])
+            #scat.set_data([point.position[frame][0]],[point.position[frame][1]])
+            #scat.set_3d_properties([point.position[frame][2]])
 
         return lines+scatters
 
@@ -210,11 +213,12 @@ def AnimationSurface(data, listofpoints):
 
     lines = []
     for i in range(len(data)):
-        lines.append(ax.plot([data[i,0,0], data[i,3,0]], [data[i,1,0], data[i,4,0]], [data[i,2,0], data[i,5,0]],'-o', color='black')[0])
+        lines.append(ax.plot([data[i,0,0], data[i,3,0]], [data[i,1,0], data[i,4,0]], [data[i,2,0], data[i,5,0]],'-o', color='black', markersize=1)[0])
 
     scatters = []
     for i in range(len(listofpoints)):
-        scatters.append(ax.plot([listofpoints[i].position[0][0]],[listofpoints[i].position[0][1]],[listofpoints[i].position[0][2]],'o', color='red', markersize=1)[0])
+        x,y,z = listofpoints[i].getPosition(animation, 0)
+        scatters.append(ax.plot([x],[y],[z],'o', color='red', markersize=1)[0])
 
 
     ax.set_xlabel('X Label')
@@ -224,9 +228,10 @@ def AnimationSurface(data, listofpoints):
     ax.set_xlim(mini,maxi)
     ax.set_ylim(mini,maxi)
     ax.set_zlim(mini,maxi)
+    print('hi')
     ani = FuncAnimation(fig, update, frames=np.arange(len(data[0,0,:])), fargs=(lines, data, scatters, listofpoints),interval=1,
                              blit=True)
-
+    print('hi')
     plt.show()
 
 
@@ -360,7 +365,7 @@ def plotAxesVectors(x,y,z=False):
     if z:
         ax.plot([0,z[0]],[0,z[1]],[0, z[2]], color='blue')
     plt.show()
-    
+
 def plotVector(vec):
     fig = plt.figure(figsize=(12,8))
     ax = fig.add_subplot(111, projection='3d')
@@ -547,14 +552,14 @@ def PlotBVH(animation):
     ax.set_xlim(mindata,maxdata)
     ax.set_ylim(mindata,maxdata)
     ax.set_zlim(mindata,maxdata)
-    
+
     ani = FuncAnimation(fig, update, frames=np.arange(animation.frames), fargs=([scatters]) ,interval=1, blit=True)
-    
+
     plt.show()
     return ani
 
 
-def PlotBVHSurface(animation, surface):       
+def PlotBVHSurface(animation, surface):
     def update(frame, surf, lines):
         for triangle_plot, i in zip(surf, range(len(surface.headmesh)+len(surface.bodymesh))):
             if i< len(surface.headmesh):
@@ -568,7 +573,7 @@ def PlotBVHSurface(animation, surface):
                 vertices = np.asarray(vertices)
             triangle_plot.set_data(vertices[:,0],vertices[:,1])
             triangle_plot.set_3d_properties(vertices[:,2])
-        
+
         for line, bone in zip(lines, animation.getBones(frame)):
             line.set_data([bone[0], bone[3]], [bone[1], bone[4]])
             line.set_3d_properties([bone[2], bone[5]])
@@ -586,7 +591,7 @@ def PlotBVHSurface(animation, surface):
             mindata = np.min(position)
         if np.max(position)>maxdata:
             maxdata = np.max(position)
-            
+
     surf = []
     for triangle in surface.headmesh:
         vertices = [[vert.getPosition(animation,0)[0],vert.getPosition(animation,0)[1],vert.getPosition(animation,0)[2]] for vert in triangle]
@@ -599,11 +604,11 @@ def PlotBVHSurface(animation, surface):
         vertices.append([triangle[0].getPosition(animation,0)[0],triangle[0].getPosition(animation,0)[1],triangle[0].getPosition(animation,0)[2]])
         vertices = np.asarray(vertices)
         surf.append(ax.plot(vertices[:,0],vertices[:,1],vertices[:,2],'-o', color='red', markersize=1, alpha = 0.5)[0])
-            
+
     lines = []
     for bone in animation.getBones(0):
         lines.append(ax.plot([bone[0], bone[3]], [bone[1], bone[4]], [bone[2], bone[5]],'-o', color='black')[0])
-        
+
     ax.set_xlabel('X Label')
     ax.set_ylabel('Y Label')
     ax.set_zlabel('Z Label')
@@ -627,7 +632,7 @@ def PlotPoseAndSurface(animation, surface, axes = False, frame = 0):
     x = np.asarray([7,0,0])
     y = np.asarray([0,7,0])
     z = np.asarray([0,0,7])
-    
+
     if axes:
         for joint in animation.getlistofjoints():
             if joint in animation.getskeletonmap().getJointsNoRootHips():
@@ -649,7 +654,7 @@ def PlotPoseAndSurface(animation, surface, axes = False, frame = 0):
             vertices.append([triangle[0].getPosition(animation,frame)[0],triangle[0].getPosition(animation,frame)[1],triangle[0].getPosition(animation,frame)[2]])
             vertices = np.asarray(vertices)
             surf.append(ax.plot(vertices[:,0],vertices[:,1],vertices[:,2],'-o', color='red', markersize=1, alpha = 0.5)[0])
-    
+
         for triangle in surface.bodymesh:
             vertices = [[vert.getPosition(animation,frame)[0],vert.getPosition(animation,frame)[1],vert.getPosition(animation,frame)[2]] for vert in triangle]
             vertices.append([triangle[0].getPosition(animation,frame)[0],triangle[0].getPosition(animation,frame)[1],triangle[0].getPosition(animation,frame)[2]])
@@ -675,19 +680,19 @@ def PlotPoseAndSurface(animation, surface, axes = False, frame = 0):
     ax.view_init(elev=100, azim=-90)
     ax.axis('off')
     plt.tight_layout()
-    
+
 #    ani = FuncAnimation(fig, update, frames=np.arange(len(data[0,0,:])), fargs=(bones, data, scatters, listofpoints, vectors, dispvectors),interval=1,
 #                             blit=True)
 
     plt.show()
-    
-    
+
+
 def CheckTargets(animation, joint, joint1, ego):
     target = np.asarray([ego.getTarget(frame) for frame in range(animation.frames)])
     position = np.asarray([joint.getPosition(frame) for frame in range(animation.frames)])
     position1 = np.asarray([joint1.getPosition(frame) for frame in range(animation.frames)])
-    
-    
+
+
     fig = plt.figure(figsize=(12,6))
     ax = fig.add_subplot(1, 1, 1)
     ax.plot(target[:,0], label='X', color = 'red', linestyle = '--')
@@ -699,14 +704,14 @@ def CheckTargets(animation, joint, joint1, ego):
     ax.plot(position1[:,0], color = 'black', linestyle = '-')
     ax.plot(position1[:,1], color = 'black', linestyle = '-')
     ax.plot(position1[:,2], color = 'black', linestyle = '-')
-    
+
     plt.legend(title='Target position:')
     plt.show()
 
 
 def PlotDispvectorsFrames(srcAnim, srcSurface, tgtAnim, tgtSurface, egoCoord, f1, f2, f3):
     fig, axs = plt.subplots(2, 3, figsize=(16,8))
-    
+
     min_X, max_X = np.inf,np.NINF
     min_Y, max_Y = np.inf,np.NINF
     for animation, surface, line in zip([srcAnim, tgtAnim],[srcSurface, tgtSurface],range(2)):
@@ -729,17 +734,17 @@ def PlotDispvectorsFrames(srcAnim, srcSurface, tgtAnim, tgtSurface, egoCoord, f1
                 axs[line, column].plot(vertices[:,0],vertices[:,1],'-o', color='red', markersize=1, alpha = 0.5)
             mini_X,maxi_X = np.min([aux[:,0].min(),aux[:,3].min()]), np.max([aux[:,0].max(),aux[:,3].max()])
             mini_Y, maxi_Y = np.min([aux[:,1].min(),aux[:,4].min()]), np.max([aux[:,1].max(),aux[:,4].max()])
-            if mini_X<min_X: 
+            if mini_X<min_X:
                 min_X=mini_X
-            if maxi_X>max_X: 
+            if maxi_X>max_X:
                 max_X=maxi_X
-            if mini_Y<min_Y: 
+            if mini_Y<min_Y:
                 min_Y=mini_Y
-            if maxi_Y>max_Y: 
+            if maxi_Y>max_Y:
                 max_Y=maxi_Y
-                
+
     lenNoLimb = len(srcSurface.headmesh)+len(srcSurface.bodymesh)
-    for frame, column in zip([f1,f2,f3],range(3)):        
+    for frame, column in zip([f1,f2,f3],range(3)):
         dispvector = np.asarray([np.asarray(egoCoord.framecoord[frame].dispvector[i]*egoCoord.framecoord[frame].tau[i])+egoCoord.framecoord[frame].refpoint[i] for i in range(lenNoLimb)])
         refpoint = np.asarray(egoCoord.framecoord[frame].refpoint[:lenNoLimb])
         norm_importance = egoCoord.framecoord[frame].importance/egoCoord.framecoord[frame].importance.max()
@@ -764,14 +769,14 @@ def PlotDispvectorsFrames(srcAnim, srcSurface, tgtAnim, tgtSurface, egoCoord, f1
     font_size = 16
     for column in range(3):
         axs[1,column].set_xlabel(str.format('Frame %i' % frames[column]), fontsize=font_size)
-        
+
     axs[0,0].set_ylabel('Source', fontsize=font_size)
     axs[1,0].set_ylabel('Target', fontsize=font_size)
-    
+
     plt.tight_layout()
     plt.show()
-    
-    
+
+
 def PlotDispvectorsFrames3D(animation, surface, egoCoord, frame, target = True, skipHead = False, skipBody = False):
     fig = plt.figure(figsize=(16,16))
     ax = fig.add_subplot(111, projection='3d')
@@ -794,9 +799,9 @@ def PlotDispvectorsFrames3D(animation, surface, egoCoord, frame, target = True, 
     mini_X,maxi_X = np.min([aux[:,0].min(),aux[:,3].min()]), np.max([aux[:,0].max(),aux[:,3].max()])
     mini_Y, maxi_Y = np.min([aux[:,1].min(),aux[:,4].min()]), np.max([aux[:,1].max(),aux[:,4].max()])
     mini_Z, maxi_Z = np.min([aux[:,2].min(),aux[:,5].min()]), np.max([aux[:,2].max(),aux[:,5].max()])
-    
+
     lenNoLimb = len(surface.headmesh)+len(surface.bodymesh)
-    #Print target or source ego coords refpoint 
+    #Print target or source ego coords refpoint
     if not target:
         dispvector = np.asarray([np.asarray(egoCoord.framecoord[frame].dispvector[i]*egoCoord.framecoord[frame].tau[i])+egoCoord.framecoord[frame].refpoint[i] for i in range(lenNoLimb)])
         refpoint = np.asarray(egoCoord.framecoord[frame].refpoint[:lenNoLimb])
@@ -822,14 +827,14 @@ def PlotDispvectorsFrames3D(animation, surface, egoCoord, frame, target = True, 
             else:
                 ax.plot([refpoint[i,0],dispvector[i,0]],[refpoint[i,1],dispvector[i,1]],[refpoint[i,2],dispvector[i,2]], color=[np.clip(1*(1-norm_importance[i]),0,1),np.clip(1*(1-norm_importance[i]),0,1),1,1])
                 ax.scatter(refpoint[i,0], refpoint[i,1], refpoint[i,2], color='red', alpha=0.5)
-        
-        
+
+
         target = egoCoord.getTarget(frame)
         ax.scatter(target[0], target[1], target[2], color='red', marker="X", s=100, alpha=0.5)
         ee = animation.getskeletonmap().rhand.getPosition(frame)
         ax.scatter(ee[0], ee[1], ee[2], color='green', marker="o", s=80)
-            
-            
+
+
     ax.set_xlabel('X Label')
     ax.set_ylabel('Y Label')
     ax.set_zlabel('Z Label')
@@ -842,10 +847,10 @@ def PlotDispvectorsFrames3D(animation, surface, egoCoord, frame, target = True, 
     ax.view_init(elev=100, azim=-90)
     ax.axis('off')
     plt.show()
-    
-    
-    
-    
+
+
+
+
 def MSc_printSurfaces(animation, surface, step = 45, frame = 0):
     """
     Imprime surperficies em diferentes posições
@@ -863,7 +868,7 @@ def MSc_printSurfaces(animation, surface, step = 45, frame = 0):
     """
     fig, axs = plt.subplots(1, 6, figsize=(16,8))
     rot = mathutils.matrixR([0,-90+step,0])
-    
+
     for i in range(6):
         rot = mathutils.matrixR([0,-90+step*i,0])
         for triangle in surface.bodymesh + surface.headmesh:
@@ -882,8 +887,8 @@ def MSc_printSurfaces(animation, surface, step = 45, frame = 0):
             axs[i].set_ylim(70,180)
             # print(vertices[:,2])
             # print('----------------------')
-    
-    
+
+
 def MSc_printSurfacesAndPoses(animation, surface, step = 45, frame = 0, figs = 6):
     """
     Imprime surperficies em diferentes posições
@@ -899,18 +904,18 @@ def MSc_printSurfacesAndPoses(animation, surface, step = 45, frame = 0, figs = 6
     None.
 
     """
-    
+
     fig, axs = plt.subplots(1, figs, figsize=(16,8))
     rot = mathutils.matrixR([0,-90+step,0])
-    
+
     aux = animation.getBones(frame)
     print(aux.shape)
-    
-    
+
+
     for i in range(figs):
         rot = mathutils.matrixR([0,-90+step*i,0])
-        
-        
+
+
         for j in range(len(aux)):
             bones1 = np.asarray([np.dot(rot,aux[k,:3]) for k in range(len(aux))])
             bones2 = np.asarray([np.dot(rot,aux[k,3:]) for k in range(len(aux))])
@@ -919,7 +924,7 @@ def MSc_printSurfacesAndPoses(animation, surface, step = 45, frame = 0, figs = 6
             #Plot skeleton
         for j in range(len(bones1)):
             axs[i].plot([bones1[j,0], bones2[j,0]], [bones1[j,1], bones2[j,1]],'-o', color='black')[0]
-    
+
         for triangle in surface.bodymesh + surface.headmesh:
             vertices = [[vert.getPosition(animation,frame)[0],vert.getPosition(animation,frame)[1],vert.getPosition(animation,frame)[2]] for vert in triangle]
             vertices.append([triangle[0].getPosition(animation,frame)[0],triangle[0].getPosition(animation,frame)[1],triangle[0].getPosition(animation,frame)[2]])
@@ -936,7 +941,7 @@ def MSc_printSurfacesAndPoses(animation, surface, step = 45, frame = 0, figs = 6
             axs[i].set_ylim(70,180)
             # print(vertices[:,2])
             # print('----------------------')
-    
+
 def MSc_printSurfaceAndCapsule(animation, surface, frame = 0, plotcapsule=True):
     """
     Imprime surperficies em diferentes posições
@@ -953,11 +958,11 @@ def MSc_printSurfaceAndCapsule(animation, surface, frame = 0, plotcapsule=True):
 
     """
     fig, axs = plt.subplots(figsize=(12,12))
-    
+
     aux = animation.getBones(frame)
     for i in range(len(aux)):
         axs.plot([aux[i,0], aux[i,3]], [aux[i,1], aux[i,4]],'-o', color='black')[0]
-    
+
     for triangle in surface.bodymesh + surface.headmesh:
         vertices = [[vert.getPosition(animation,frame)[0],vert.getPosition(animation,frame)[1],vert.getPosition(animation,frame)[2]] for vert in triangle]
         vertices.append([triangle[0].getPosition(animation,frame)[0],triangle[0].getPosition(animation,frame)[1],triangle[0].getPosition(animation,frame)[2]])
@@ -971,7 +976,7 @@ def MSc_printSurfaceAndCapsule(animation, surface, frame = 0, plotcapsule=True):
         axs.set_axis_off()
         # print(vertices[:,2])
         # print('----------------------')
-        
+
         if plotcapsule == True:
             for point in surface.points:
                 if point.pointtype == 'limb':
@@ -1024,7 +1029,7 @@ def MSc_printSurfaceAndCapsule(animation, surface, frame = 0, plotcapsule=True):
                     axs.plot(x,y, color='gray')
     axs.set_xlim([-100,100])
     axs.set_ylim([0,200])
-    
+
 def MSc_PlotOrtho(which , step=0.01, epsilon = 0.0001, start = -np.pi, stop = np.pi):
     x = np.arange(start,stop,step)   # start,stop,step
     if which == 'cos':
@@ -1041,7 +1046,7 @@ def MSc_PlotOrtho(which , step=0.01, epsilon = 0.0001, start = -np.pi, stop = np
         y = np.abs(np.cos(x))
     else:
         print('Opção errada')
-        
+
     plt.axhline(0, color='gray')
     plt.axvline(np.pi/2, color='red')
     plt.axvline(0, color='gray')
@@ -1053,13 +1058,13 @@ def MSc_PlotOrtho(which , step=0.01, epsilon = 0.0001, start = -np.pi, stop = np
         plt.axhline(0.5, color='red')
         ax.set_ylim([-1.1,1.1])
     plt.plot(x,y)
-    
+
 def MSc_PlotCos(step):
     x = np.arange(0,4*np.pi,0.1)   # start,stop,step
     y = np.sin(x)
     plt.plot(x,y)
-    
-    
+
+
 def MSc_PlotTrajectory(animation, animation2 = None, animation3 =None, joint = None):
     if not joint:
         joint = animation.getskeletonmap().rhand
@@ -1070,24 +1075,24 @@ def MSc_PlotTrajectory(animation, animation2 = None, animation3 =None, joint = N
     if animation3:
         joint = animation3.getskeletonmap().rhand
         traj3 = np.asarray([ np.linalg.norm(joint.getPosition(frame)) for frame in range(animation3.frames)])
-    
+
     time = animation.frames/120
     t = np.arange(0,time,time/animation.frames)
-    
+
     fig, ax = plt.subplots(figsize=(12,8), dpi=150)
     plt.plot(t,traj, label='Performer', color='black',linewidth=2.0)
     if animation2:
         plt.plot(t,traj2, label='Talita', linestyle='--', color='green',linewidth=2.0 )
     if animation3:
         plt.plot(t,traj3, label='Aragor', color='blue', linestyle='dashdot',linewidth=2.0 )
-    
+
     ax.set_ylabel('Distance from the Origin ($cm$)')
     ax.set_xlabel('Time ($s$)')
     ax.legend()
     plt.tight_layout()
     fig.savefig('Trajectory', dpi=300)
-    
-     
+
+
 def MSc_PlotTrajectoryIK(animation, animation2 = None, animation3 =None, joint = None):
     if not joint:
         joint = animation.getskeletonmap().rhand
@@ -1098,17 +1103,17 @@ def MSc_PlotTrajectoryIK(animation, animation2 = None, animation3 =None, joint =
     if animation3:
         joint = animation3.getskeletonmap().rhand
         traj3 = np.asarray([ np.linalg.norm(joint.getPosition(frame)) for frame in range(animation3.frames)])
-    
+
     time = animation.frames/120
     t = np.arange(0,time,time/animation.frames)
-    
+
     fig, ax = plt.subplots(figsize=(12,8), dpi=150)
     plt.plot(t,traj, label='Performer', color='black',linewidth=2.0 )
     if animation2:
         plt.plot(t,traj2, label='Initial Retargeting', linestyle='--', color='red',linewidth=2.0 )
     if animation3:
         plt.plot(t,traj3, label='Complete Retargeting', color='blue',linewidth=2.0 )
-    
+
     ax.set_ylabel('Distance from the Origin ($cm$)')
     ax.set_xlabel('Time ($s$)')
     ax.legend()
@@ -1120,7 +1125,7 @@ def MSc_PlotImportance(animation, ego, joint=None):
     if not joint:
         joint = animation.getskeletonmap().rhand
         # ego = ego[0]
-        
+
     # lenHead = 13
     # lenBody = 9
     # lenLimb = 6
@@ -1129,7 +1134,7 @@ def MSc_PlotImportance(animation, ego, joint=None):
 
     time = animation.frames/120
     t = np.arange(0,time,time/animation.frames)
-    
+
     fig, ax = plt.subplots(figsize=(8,8), dpi=150)
     plt.plot(t,imphead, label='Head', color='green')
     plt.plot(t,impbody, label='Body', color='blue')
@@ -1146,16 +1151,3 @@ def MSc_PlotImportance(animation, ego, joint=None):
     ax.legend()
     plt.tight_layout()
     fig.savefig('Importance', dpi=300)
-
-
-
-
-
-
-
-
-
-
-
-
-           

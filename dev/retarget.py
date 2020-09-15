@@ -84,7 +84,7 @@ def PostureInitialization(tgtMap, srcMap, heightRatio, frame, getpositions=False
             #Get new local rotation euler angles
             tgtNewLclRotationEuler, warning = mathutils.eulerFromMatrix(tgtNewLclRotationMat, avabone[0].order)
             avabone[0].setRotation(frame,tgtNewLclRotationEuler)
-            
+
     else:
         for joint_ava, joint_mocap in zip(tgtMap.getJointsNoRootHips(), srcMap.getJointsNoRootHips()):
             if joint_ava is not None and joint_mocap is not None:
@@ -184,61 +184,64 @@ def MotionRetargeting(sourceAnimationPath, sourceSurfacePath, targetSkeletonPath
 
     start=time.time()
     print('Starting Motion Retargeting')
+    start = time.time()
     for frame in range(srcAnimation.frames):
-        start = time.time()
-        PostureInitialization(tgtMap, srcMap, heightRatio, frame, getpositions = False, headAlign = True, spineAlign = False)
         
+        PostureInitialization(tgtMap, srcMap, heightRatio, frame, getpositions = False, headAlign = True, spineAlign = False)
+
         #TODO: DEBUG
         # print('PI: %.4f seconds.' % (time.time()-start))
-        
-        
+
+
         #TODO: VERIFICAR SE AINDA PRECISO DISSO
         #print('Starting avatar surface position estimation')
         #surface.AvatarSurfacePositionEstimation(tgtAnimation, tgtSurface)
         #print('Done. %s seconds.' % (time.time()-start))
-    
+
         # if not computeEgo:
         #     return tgtAnimation, tgtSurface, srcAnimation, srcSurface, None, None
         # else:
         #tgtAnimation_onlyInitial = deepcopy(tgtAnimation)
-        
+
         # Calculate egocentric coordinates ############################################
-        start = time.time()
+        #start = time.time()
         egocoord = egocentriccoord.GetEgocentricCoordinatesTargets(srcAnimation, srcSurface, tgtAnimation, tgtSurface, frame)
         
+        MotionRetargeting.importance.append(egocoord[0].importance)
+
         #TODO: DEBUG
         # print('EC: %.4f seconds.' % (time.time()-start))
 
 
         # Aplica Cinemática Inversa ###################################################
-        start = time.time()
+        #start = time.time()
         targetRHand = egocoord[0].getTarget(frame)
         targetLHand = egocoord[1].getTarget(frame)
         logR = JacRHand.jacobianTranspose(frame=frame, target=targetRHand)
         logL = JacLHand.jacobianTranspose(frame=frame, target=targetLHand)
         iklogRHand.append(logR)
         iklogLHand.append(logL)
-        
+
         #TODO: DEBUG
         # print('IK: %.4f seconds.' % (time.time()-start))
-        
-        
+
+
         # targetRHand = [0,0,0]
         # targetLHand = [0,0,0]
         # if np.mod(frame+1,100) == 0:
         #     print('%i frames done. %s seconds.' % (int((frame+1)/100)*100,time.time()-start))
         #     start=time.tim'e()
-    
-        # # Adjust Limb Extremities ##################################################      
-        start = time.time()
+
+        # # Adjust Limb Extremities ##################################################
+        #start = time.time()
         egocentriccoord.AdjustExtremityOrientation(tgtAnimation, tgtSurface, egocoord, srcAnimation,frame)
-        
+
         #TODO: DEBUG
         #print('LE: %.4f seconds.' % (time.time()-start))
-        
-        
+
+
         #egocentriccoord.AdjustExtremityOrientation2(tgtAnimation, srcAnimation)
-    
+
         if np.mod(frame+1,100) == 0:
             print('%i frames done. %s seconds.' % (int((frame+1)/100)*100,time.time()-start))
             start=time.time()
@@ -247,7 +250,9 @@ def MotionRetargeting(sourceAnimationPath, sourceSurfacePath, targetSkeletonPath
             #return tgtAnimation, tgtSurface, srcAnimation, srcSurface, tgtAnimation_onlyInitial, egocoord
             return tgtAnimation, tgtSurface, srcAnimation, srcSurface, None, egocoord
 
-    currentpath = os.path.dirname(os.path.realpath(__file__))
+
+    #currentpath = os.path.dirname(os.path.realpath(__file__))
+    currentpath = out_path
     # # Save File ###################################################
     output_filename = source_filename[:-4] + '_retarget'
     of_aux = output_filename
@@ -257,7 +262,7 @@ def MotionRetargeting(sourceAnimationPath, sourceSurfacePath, targetSkeletonPath
         output_filename = of_aux + str(i)
 
     bvhsdk.WriteBVH(tgtAnimation, currentpath, output_filename, refTPose = True)
-    
+
     # if saveInitAndFull:
     #     output_filename = source_filename[:-4] + '_initialRetarget'
     #     of_aux = output_filename
@@ -267,10 +272,10 @@ def MotionRetargeting(sourceAnimationPath, sourceSurfacePath, targetSkeletonPath
     #         output_filename = of_aux + str(i)
     #     bvhsdk.WriteBVH(tgtAnimation_onlyInitial, currentpath, output_filename,refTPose=True)
     #return tgtAnimation, tgtSurface, srcAnimation, srcSurface, tgtAnimation_onlyInitial, egocoord
-    
+
     print('Done! Total time: %s seconds.' % (time.time()-retargettime))
     return tgtAnimation, tgtSurface, srcAnimation, srcSurface, None, egocoord
-    
+
 
 # Generate Surface Calibration ###############################################
 #start = time.time()
@@ -292,13 +297,10 @@ realpath = os.path.dirname(os.path.realpath(__file__))
 # sourceanimations = ['Superficie\Rodolfo2\Avo_mcp.bvh','Superficie\Rodolfo2\Bisavo_mcp.bvh', 'Superficie\Rodolfo2\Bota_mcp.bvh','Superficie\Rodolfo2\Bota001_mcp.bvh','Superficie\Rodolfo2\Bronzear_mcp.bvh','Superficie\Rodolfo2\Calma_mcp.bvh','Superficie\Rodolfo2\Caminhar_mcp.bvh','Superficie\Rodolfo2\Casas_mcp.bvh','Superficie\Rodolfo2\Edificio_mcp.bvh','Superficie\Rodolfo2\Entender_mcp.bvh','Superficie\Rodolfo2\Macarena_mcp.bvh','Superficie\Rodolfo2\Maos_mcp.bvh','Superficie\Rodolfo2\Maos001_mcp.bvh','Superficie\Rodolfo2\Palmas_mcp.bvh','Superficie\Rodolfo2\Palmas001_mcp.bvh','Superficie\Rodolfo2\Procurar_mcp.bvh','Superficie\Rodolfo2\Salto_mcp.bvh','Superficie\Rodolfo2\Sapo_mcp.bvh','Superficie\Rodolfo2\Sentar_mcp.bvh','Superficie\Rodolfo2\Sentar001_mcp.bvh','Superficie\Rodolfo2\Surdo_mcp.bvh','Superficie/Rodolfo3/Abraco_mcp.bvh', 'Superficie/Rodolfo3/Boca001_mcp.bvh', 'Superficie/Rodolfo3/Boca_mcp.bvh', 'Superficie/Rodolfo3/Braco001_mcp.bvh', 'Superficie/Rodolfo3/Braco002_mcp.bvh', 'Superficie/Rodolfo3/Braco_mcp.bvh', 'Superficie/Rodolfo3/Cabeca001_mcp.bvh', 'Superficie/Rodolfo3/Cabeca_mcp.bvh', 'Superficie/Rodolfo3/Calma_mcp.bvh', 'Superficie/Rodolfo3/Calor_mcp.bvh', 'Superficie/Rodolfo3/Cansado_mcp.bvh', 'Superficie/Rodolfo3/Chateado001_mcp.bvh', 'Superficie/Rodolfo3/Chateado_mcp.bvh', 'Superficie/Rodolfo3/Cintura_mcp.bvh', 'Superficie/Rodolfo3/Continencia001_mcp.bvh', 'Superficie/Rodolfo3/Continencia_mcp.bvh', 'Superficie/Rodolfo3/Corpo_mcp.bvh', 'Superficie/Rodolfo3/costas_mcp.bvh', 'Superficie/Rodolfo3/Dedos_mcp.bvh', 'Superficie/Rodolfo3/Dormir_mcp.bvh', 'Superficie/Rodolfo3/Dor_mcp.bvh', 'Superficie/Rodolfo3/Entender_mcp.bvh', 'Superficie/Rodolfo3/Exercicio_mcp.bvh', 'Superficie/Rodolfo3/Frente_mcp.bvh', 'Superficie/Rodolfo3/Frio_mcp.bvh', 'Superficie/Rodolfo3/Lavar_Cabelo001_mcp.bvh', 'Superficie/Rodolfo3/Lavar_Cabelo_mcp.bvh', 'Superficie/Rodolfo3/Macarena_mcp.bvh', 'Superficie/Rodolfo3/Observar_mcp.bvh', 'Superficie/Rodolfo3/OlhoD_mcp.bvh', 'Superficie/Rodolfo3/OlhoE_mcp.bvh', 'Superficie/Rodolfo3/Orelha001_mcp.bvh', 'Superficie/Rodolfo3/Orelha_mcp.bvh', 'Superficie/Rodolfo3/Procurar_mcp.bvh', 'Superficie/Rodolfo3/Teste_Braco_mcp.bvh', 'Superficie/Rodolfo3/Teste_Geral_mcp.bvh']
 #sourceanimations = ['Superficie\Paula\Avo_mcp.bvh', 'Superficie\Paula\Avo001_mcp.bvh','Superficie\Paula\Bisavo_mcp.bvh', 'Superficie\Paula\Bota_mcp.bvh','Superficie\Paula\Bronzear_mcp.bvh','Superficie\Paula\Cabeca_mcp.bvh','Superficie\Paula\Costas_mcp.bvh','Superficie\Paula\Danca_mcp.bvh','Superficie\Paula\Edificio_mcp.bvh','Superficie\Paula\Entender_mcp.bvh', 'Superficie\Paula\Frente_mcp.bvh','Superficie\Paula\Macarena_mcp.bvh','Superficie\Paula\Palmas_mcp.bvh','Superficie\Paula\Polichinelo_mcp.bvh','Superficie\Paula\Pulo_mcp.bvh','Superficie\Paula\Sapo_mcp.bvh','Superficie\Paula\Sentar_mcp.bvh','Superficie\Paula\Surdo_mcp.bvh']
 # sourceanimations = ['Superficie\Rodolfo4\Abraco_mcp.bvh', 'Superficie\Rodolfo4\Avo_mcp.bvh', 'Superficie\Rodolfo4\Baleia_mcp.bvh', 'Superficie\Rodolfo4\Barriga001_mcp.bvh', 'Superficie\Rodolfo4\Barriga2_mcp.bvh', 'Superficie\Rodolfo4\Barriga_mcp.bvh', 'Superficie\Rodolfo4\Bisavo_mcp.bvh', 'Superficie\Rodolfo4\Boca_mcp.bvh', 'Superficie\Rodolfo4\Bronzear001_mcp.bvh', 'Superficie\Rodolfo4\Bronzear_mcp.bvh', 'Superficie\Rodolfo4\Cabeca_mcp.bvh', 'Superficie\Rodolfo4\Cabelo_mcp.bvh', 'Superficie\Rodolfo4\Casas001_mcp.bvh', 'Superficie\Rodolfo4\Casas_mcp.bvh', 'Superficie\Rodolfo4\Chocado_mcp.bvh', 'Superficie\Rodolfo4\Continencia_mcp.bvh', 'Superficie\Rodolfo4\Costas001_mcp.bvh', 'Superficie\Rodolfo4\Costas002_mcp.bvh', 'Superficie\Rodolfo4\Costas_mcp.bvh', 'Superficie\Rodolfo4\Dance_mcp.bvh', 'Superficie\Rodolfo4\Entender001_mcp.bvh', 'Superficie\Rodolfo4\Entender_mcp.bvh', 'Superficie\Rodolfo4\Esconder_mcp.bvh', 'Superficie\Rodolfo4\Frente001_mcp.bvh', 'Superficie\Rodolfo4\Frente_mcp.bvh', 'Superficie\Rodolfo4\Girar_mcp.bvh', 'Superficie\Rodolfo4\Juramento_mcp.bvh', 'Superficie\Rodolfo4\Mao_na_frente_mcp.bvh', 'Superficie\Rodolfo4\Observar001_mcp.bvh', 'Superficie\Rodolfo4\Observar_mcp.bvh', 'Superficie\Rodolfo4\Olhos2_mcp.bvh', 'Superficie\Rodolfo4\Olhos3_mcp.bvh', 'Superficie\Rodolfo4\Olho_mcp.bvh', 'Superficie\Rodolfo4\Pescoco_mcp.bvh', 'Superficie\Rodolfo4\Preocupado001_mcp.bvh', 'Superficie\Rodolfo4\Preocupado_mcp.bvh', 'Superficie\Rodolfo4\Relaxar_mcp.bvh', 'Superficie\Rodolfo4\Sapo_mcp.bvh', 'Superficie\Rodolfo4\Surdo_mcp.bvh']
-# sourceanimations = ['Superficie\Rodolfo3\Orelha001_mcp.bvh']
-# sourceanimations = ['Superficie\Rodolfo4\Baleia_mcp.bvh']
-# sourceanimations = ['Superficie\Rodolfo4\Mao_na_frente_mcp.bvh']
-#sourceanimations = ['Superficie\Emely2\RotMaos_mcp.bvh']
-#sourceanimations = ['Superficie\Paula\Avo_mcp.bvh']
 #sourceanimations = [os.path.join(realpath, sourceanimations[i]) for i in range(len(sourceanimations))]
-sourceanimations = ['D:\Documents\Rodolfo\MoCap\Kroton\Calib_Texto001_mcp.bvh']
+
+sourceanimations = ['..\..\Superficie\Rodolfo4\Mao_na_frente_mcp.bvh']
+#sourceanimations = ['D:\Documents\Rodolfo\MoCap\Kroton\Calib_Texto001_mcp.bvh']
 
 # Path to Source Calibration #################################################
 # sourcesurface = os.path.join(realpath, 'Superficie\Rodolfo\surface_rodolfo.txt')
@@ -306,7 +308,8 @@ sourceanimations = ['D:\Documents\Rodolfo\MoCap\Kroton\Calib_Texto001_mcp.bvh']
 # sourcesurface = os.path.join(realpath, 'Superficie\Rodolfo4\surface_rodolfo.txt')
 #sourcesurface = os.path.join(realpath, 'Superficie\Emely2\surface_emely2.txt')
 #sourcesurface = os.path.join(realpath, 'Superficie\Paula\surface_1.txt')
-sourcesurface = os.path.join(realpath, 'D:\Documents\Rodolfo\MoCap\Kroton\surface_soraia.txt')
+#sourcesurface = os.path.join(realpath, 'D:\Documents\Rodolfo\MoCap\Kroton\surface_soraia.txt')
+sourcesurface = os.path.join(realpath, '..\..\Superficie\Rodolfo4\surface_rodolfo.txt')
 
 # Path to Target TPose BVH File ##############################################
 # Path to Target Calibration File ############################################
@@ -322,7 +325,9 @@ skeletonmappath = None #Use standard
 # targetsurface = os.path.join(realpath, 'surface_gremlin.csv')
 # skeletonmappath = os.path.join(realpath, 'skeletonmap_gremlin.csv')
 
-
+out_path = os.path.join(realpath, '..\data\output')
+if not os.path.exists(out_path):
+    os.makedirs(out_path)
 for path in sourceanimations:
     starttime=time.time()
     #Get only surface
@@ -332,11 +337,13 @@ for path in sourceanimations:
     # Get everything, dont save
     # tgtAnim, tgtSurf, srcAnim, srcSurf, tgtAnim_onlyInitial, ego = MotionRetargeting(path, sourcesurface, targettpose, targetsurface, skeletonmappath, computeEgo = True, computeIK = True, adjustOrientation = True, saveFile = False, saveInitAndFull = False)
     # Everything and save
+    MotionRetargeting.importance = []
     tgtAnim, tgtSurf, srcAnim, srcSurf, tgtAnim_onlyInitial, ego = MotionRetargeting(path, sourcesurface, targettpose, targetsurface, skeletonmappath, computeEgo = True, computeIK = True, adjustOrientation = True, saveFile = True, saveInitAndFull = True)
     print('Total time: %s seconds.' % (time.time()-starttime))
+    mathutils.printLog()
 
 
-
+#tgtAnim.PlotAnimation(tgtSurf)
 
 
 
@@ -359,9 +366,9 @@ for path in sourceanimations:
 #                 #if the joint is inside the mesh, that is, the normal and the distance from the projected point have a angle between them bigger then 90 (or -90) degrees
 #                 if (mathutils.cosBetween(normal, distance_vector, absolute = False) < 0):
 #                     print(i)
-            
-            
-            
+
+
+
 #     lforearm, rforearm = animation.getskeletonmap().lforearm, animation.getskeletonmap().rforearm
 #     lhand, rhand = animation.getskeletonmap().lhand, animation.getskeletonmap().rhand
 #     llowleg, rlowleg = animation.getskeletonmap().llowleg, animation.getskeletonmap().rlowleg
@@ -373,7 +380,7 @@ for path in sourceanimations:
 #     thight_radius = min(surface.getPoint('thightLeft').radius, surface.getPoint('thightRight').radius)
 #     for frame in range(animation.frames):
 #         for joint in limbsjoint:
-            
+
 #     # Pega juntas dos membros (as 8)
 #     # Para cada uma delas:
 #     #     pega a normal dos componentes
@@ -381,4 +388,3 @@ for path in sourceanimations:
 #     #     se for o componente mais proximo e o produto interno for negativo, significa que esta penetrando
 #     #     calcular a penetracao e empurrar a junta pra fora
 #     # pegar todas as juntas que sao filhas das mãos e pés, fazer a mesma coisa que de cima
-

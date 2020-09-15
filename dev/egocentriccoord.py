@@ -1551,12 +1551,16 @@ def GetEgocentricCoordinatesTargets(srcAnim, surfacesrcAnim, tgtAnim, surfacetgt
         #Mesh components
         for i in range(len(bodymesh)+len(headmesh)):
             if i<len(headmesh):
-                refpoint, dispvector, normal = mathutils.distFromCentroid(jointPosition, mesh[i][0], mesh[i][1], mesh[i][2])
-                dispvector_norm, normcoef, tau = pathnormCalc(joint, srcAnim, 'head', frame, refpoint, vectors, jointpositions)
+                #refpoint, dispvector, normal = mathutils.distFromCentroid(jointPosition, mesh[i][0], mesh[i][1], mesh[i][2])
+                normal, refpoint, dispvector, refpoint_cartesian, _ = mathutils.clampedBarycentric(jointPosition, mesh[i][0], mesh[i][1], mesh[i][2])
+                #dispvector_norm, normcoef, tau = pathnormCalc(joint, srcAnim, 'head', frame, refpoint, vectors, jointpositions)
+                dispvector_norm, normcoef, tau = pathnormCalc(joint, srcAnim, 'head', frame, refpoint_cartesian, vectors, jointpositions)
             else:
                 j = i-len(headmesh)
-                refpoint, dispvector, normal = mathutils.distFromCentroid(jointPosition, mesh[i][0], mesh[i][1], mesh[i][2])
-                dispvector_norm, normcoef, tau = pathnormCalc(joint, srcAnim, 'body', frame, refpoint, vectors, jointpositions)
+                #refpoint, dispvector, normal = mathutils.distFromCentroid(jointPosition, mesh[i][0], mesh[i][1], mesh[i][2])
+                normal, refpoint, dispvector, refpoint_cartesian, _ = mathutils.clampedBarycentric(jointPosition, mesh[i][0], mesh[i][1], mesh[i][2])
+                #dispvector_norm, normcoef, tau = pathnormCalc(joint, srcAnim, 'body', frame, refpoint, vectors, jointpositions)
+                dispvector_norm, normcoef, tau = pathnormCalc(joint, srcAnim, 'body', frame, refpoint_cartesian, vectors, jointpositions)
 
             importance, ortho, proxi = importanceCalc(dispvector, normal)
             #Importance
@@ -1657,7 +1661,8 @@ def GetEgocentricCoordinatesTargets(srcAnim, surfacesrcAnim, tgtAnim, surfacetgt
         normallist = []
         for i in range(len(bodymesh_tgtAnim)+len(headmesh_tgtAnim)):
             if i<len(headmesh_tgtAnim):
-                de_refpoint_aux, normal = mathutils.getCentroid(mesh[i][0], mesh[i][1], mesh[i][2])
+                #de_refpoint_aux, normal = mathutils.getCentroid(mesh[i][0], mesh[i][1], mesh[i][2])
+                de_refpoint_aux, normal = mathutils.barycentric2cartesian(ego.refpoint[i], mesh[i][0], mesh[i][1], mesh[i][2])
                 if joint == lhand_ava: kinpath = np.asarray([vec_neck, lvec_clavicle, lvec_arm, lvec_fore])
                 elif joint == rhand_ava: kinpath = np.asarray([vec_neck, rvec_clavicle, rvec_arm, rvec_fore])
                 elif joint == lforearm_ava: kinpath = np.asarray([vec_neck, lvec_clavicle, lvec_arm])
@@ -1668,7 +1673,8 @@ def GetEgocentricCoordinatesTargets(srcAnim, surfacesrcAnim, tgtAnim, surfacetgt
                 elif joint == rlowleg_ava: kinpath = np.asarray([vec_neck, vec_spine, rvec_femur, rvec_upleg])
             else:
                 j = i-len(headmesh_tgtAnim)
-                de_refpoint_aux, normal = mathutils.getCentroid(mesh[i][0], mesh[i][1], mesh[i][2])
+                #de_refpoint_aux, normal = mathutils.getCentroid(mesh[i][0], mesh[i][1], mesh[i][2])
+                de_refpoint_aux, normal = mathutils.barycentric2cartesian(ego.refpoint[i], mesh[i][0], mesh[i][1], mesh[i][2])
                 if joint == lhand_ava: kinpath = np.asarray([vec_spine, lvec_clavicle, lvec_arm, lvec_fore])
                 elif joint == rhand_ava: kinpath = np.asarray([vec_spine, rvec_clavicle, rvec_arm, rvec_fore])
                 elif joint == lforearm_ava: kinpath = np.asarray([vec_spine, lvec_clavicle, lvec_arm])

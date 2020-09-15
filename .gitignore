@@ -1,3 +1,7 @@
 dev/genarative.py
 dev/__pycache__
+dev/__pycache__/
 data/output
+dev/.ipynb_checkpoints
+dev/*.ipynb
+dev/*.npy

@@ -16,8 +16,9 @@ from os.path import join as pathjoin
 import time
 import skeletonmap
 
+
 class Animation:
-    
+
     def __init__(self, filename, root):
         self.name = filename
         self.root = root
@@ -27,11 +28,10 @@ class Animation:
         self.frames = None
         self.frametime = None
 
-
     def printlist(self):
         for joint in self.getlistofjoints():
             print(joint.name)
-    
+
     def getlistofjoints(self):
         """
         Get list of joints in the animation
@@ -39,20 +39,23 @@ class Animation:
         if not self.listofjoints:
             self.listofjoints = self.__auxgetlist(None, [])
         return self.listofjoints
-            
-    def __auxgetlist(self, joint=None, listofjoints = []):
+
+    def __auxgetlist(self, joint=None, listofjoints=[], skip=[]):
         """
         Create and return list of joints in the animation
+
+        skip: list of joint names to not include them and their children in the list.
         """
         if not joint:
             joint = self.root
         listofjoints.append(joint)
         for child in joint.children:
-            self.__auxgetlist(child, listofjoints)
+            if child.name not in skip:
+                self.__auxgetlist(child, listofjoints, skip)
         if joint == self.root:
             return listofjoints
 
-    def getskeletonmap(self, mapfile = None):
+    def getskeletonmap(self, mapfile=None):
         """
         Pega o mapeamento do esqueleto. Procura juntas como hips, spine, arm,
         hand, leg, etc. na instância de animação comparando os nomes das juntas
@@ -61,8 +64,6 @@ class Animation:
         if not self.skeletonmap:
             self.skeletonmap = skeletonmap.SkeletonMap(self, mapfile)
         return self.skeletonmap
-    
-
 
     def RootReferences(self):
         """
@@ -72,7 +73,6 @@ class Animation:
         self.rootNormalizedReferencePoint = [[root.position[frame][0]/root.position[0][2], root.position[frame][1]/root.position[0][2]] for frame in range(len(root.position))]
         self.rootNormalizedHeight = [root.position[frame][2]/root.position[0][2] for frame in range(len(root.position))]
         return self.rootNormalizedReferencePoint, self.rootNormalizedHeight
-
 
     def getJoint(self, jointname):
         """
@@ -85,17 +85,17 @@ class Animation:
             joint.position=[]
             joint.orientation=[]
             joint.endsiteposition=[]
-            
+
     def checkExtraRoot(self):
         """
-        O esqueleto da Talita exportado em bvh pelo MotionBuilder possui uma 
+        O esqueleto da Talita exportado em bvh pelo MotionBuilder possui uma
         junta root extra chamada 'Talita' que atrapalha o algoritmo e precisa
-        ser removida. Ela não foi removida durante a exportação pois as 
-        distâncias das juntas (tamanho dos ossos) são normalizados. 
+        ser removida. Ela não foi removida durante a exportação pois as
+        distâncias das juntas (tamanho dos ossos) são normalizados.
         Aqui verifico se a junta root do bvh possui um dos nomes válidos.
         """
-        #TODO: Função obsoleta. O usuário tem que se certificar que não existe juntas indesejadas
-        #REMOVER
+        # TODO: Função obsoleta. O usuário tem que se certificar que não existe juntas indesejadas
+        # REMOVER
         if not skeletonmap.isroot(self.root.name):
             if not self.root.children:
                 print('The animation seems to have an extra root joint without a child joint.')
@@ -113,26 +113,26 @@ class Animation:
         Work in progress
         """
         self.__erasepositions()
-        start=time.time()
-        #if self.surfaceinfo:
+        start = time.time()
+        # if self.surfaceinfo:
         for frame in range(self.root.translation.shape[0]):
             if self.surfaceinfo:
                 GetPositions(self.root, frame=frame, surfaceinfo=self.surfaceinfo)
             else:
                 GetPositions(self.root, frame=frame)
             if np.mod(frame+1,100) == 0:
-                print('%i frames done. %s seconds.' % (int((frame+1)/100)*100,time.time()-start))
-                start=time.time()
-        
+                print('%i frames done. %s seconds.' % (int((frame+1)/100)*100, time.time()-start))
+                start = time.time()
+
 
     def checkPose(self):
         """
-        Check the first frame of the animation for a valid T Pose, that is, 
+        Check the first frame of the animation for a valid T Pose, that is,
         hips facing the positive direction of the Z axis, the arms parallel to
         the X axis (left arm along positive X) and standing in the positive
         direction of Y.
         """
-        root, head, lforearm, larm = None,None,None,None
+        root, head, lforearm, larm = None, None, None, None
         for joint in self.getlistofjoints():
             print(joint.name)
             if skeletonmap.isroot(joint.name):
@@ -155,7 +155,7 @@ class Animation:
                 #if (np.abs(standvector[1]) < np.abs(standvector[0])) or (np.abs(standvector[1]) < np.abs(standvector[2]))
                 #root.rotation=np.asarray([[0,0,0] for _ in range(root.rotation.shape[0])],dtype='float')
                 self.RecalculatePositions()
-            
+
     def PlotPose(self, frame=0, surface=None):
         """
         Plot the pose in the frame
@@ -169,7 +169,7 @@ class Animation:
             bones = self.getBones(frame)
             plotanimation.PosePlotBones(joints, bones)
         else:
-            
+
             plotanimation.PlotPoseAndSurface(self, surface, frame)
 #            totaljoints = len(self.getlistofjoints())
 #            joints = np.zeros([totaljoints,3])
@@ -178,11 +178,11 @@ class Animation:
 #            joints = np.asarray(joints)
 #            bones = self.getBones(frame)
 #            plotanimation.PlotPoseAndSurface(self,surface, frame)
-#            
+#
 #            for triangle in surface.headmesh:
 #                vertices = [[vert.getPosition(self,0)[0],vert.getPosition(self,0)[1],vert.getPosition(self,0)[2]] for vert in triangle]
 
-                
+
 
     def PlotAnimation(self, surface=None):
         if surface:
@@ -194,14 +194,14 @@ class Animation:
             for point in surface.points:
                 if point.pointtype == 'mesh':
                     listofpoints.append(point)
-            plotanimation.AnimationSurface(bones, listofpoints)
+            plotanimation.AnimationSurface(self, bones, listofpoints)
         else:
             plotanimation.PlotBVH(self)
-                    
+
     def getBonesInFrames(self, *args):
         raise Exception('This method is no longer available, please use getBones()')
-        
-        
+
+
     def getBones(self, frame = 0, bonesPositions=[], joint=None):
         """
         Return the bones to plot
@@ -215,13 +215,13 @@ class Animation:
             bonesPositions.append([pp[0], pp[1], pp[2], cp[0], cp[1], cp[2]])
             if len(joint.endsite)>0:
                 es = joint.getEndSitePosition(frame)
-                bonesPositions.append([cp[0], cp[1], cp[2], es[0], es[1], es[2]])            
+                bonesPositions.append([cp[0], cp[1], cp[2], es[0], es[1], es[2]])
         for child in joint.children:
             self.getBones(frame,bonesPositions,child)
         if joint == self.root:
             return np.asarray(bonesPositions)
-        
-        
+
+
     def plotPoseSurfFrame(self, surfaceinfo, frame=0):
         """
         Plot pose in the frame with surface points
@@ -232,7 +232,7 @@ class Animation:
             joints[i] = [joint.position[frame,0],joint.position[frame,1],joint.position[frame,2]]
         joints = np.asarray(joints)
         bones = self.getBones(frame)
-        
+
         #Getting surface info, testing if there is frames information or just
         #the points
         surface = []
@@ -245,13 +245,13 @@ class Animation:
 #            except:
 #                if (point.position.shape[0] == 3):
 #                    surface.append(point.position[frame])
-        
+
         plotanimation.PosePlotBonesSurface(joints, bones, np.asarray(surface))
 
     def expandFrames(self, frames):
         """
         Expand the number of frames of the animation by coping the rotation and translation of frame zero several times.
-        
+
         frames: desired amount of frames
         """
         for joint in self.getlistofjoints():
@@ -267,12 +267,73 @@ class Animation:
 #            joint.rotation = np.empty([frames,3])
 #            joint.translation[0,:] = trans[:]
 #            joint.rotation[0,:] = rot[:]
-            
+
+    def downSample(self, target_fps):
+        current_fps = np.round(1/self.frametime)
+        if target_fps == current_fps:
+            print('Animation is already at the target frame rate.')
+            return False
+        elif target_fps > current_fps:
+            print('Can\'t perform upsampling.')
+            return False
+        else:
+            total_time = self.frames/current_fps
+            target_frametime = 1/target_fps
+            target_frames = int(np.floor(total_time/target_frametime))
+            extra_frames = self.frames - target_frames
+        step_to_remove = np.round(self.frames/extra_frames)
+        indexes_to_remove = [i for i in range(1, self.frames, int(step_to_remove))]
+        for joint in self.getlistofjoints():
+            joint.rotation = np.delete(joint.rotation, indexes_to_remove, axis=0)
+            joint.translation = np.delete(joint.translation, indexes_to_remove, axis=0)
+        self.frames = joint.rotation.shape[0]
+        self.frametime = target_frametime
+        print(str.format('Animation downsampled to %i fps. %i frames.' % (target_fps, self.frames)))
+        return True
+
+
+
+    def MLPreProcess(self, skipjoints=[], root_translation=False, root_rotation=False, local_rotation=False):
+        root_position = self.root.getGlobalTranslation(frame=0)
+        list_of_joints = self.__auxgetlist(None, [], skip=skipjoints)
+        dim1 = len(list_of_joints)  # Number of joints
+        dim2 = 3  # Three values for position
+        dim3 = self.frames  # Number of frames
+        np_array = np.empty(shape=(dim1, dim2, dim3))
+        if local_rotation:
+            np_array_rot = np.empty(shape=(dim1, dim2, dim3))
+        for frame in range(self.frames):
+            # Center root
+            if not root_translation:
+                aux_trans = self.root.getLocalTranslation(frame)
+                self.root.setTranslation(frame=frame, translation=np.array((0, 0, 0)))
+            # Fix root rotation
+            if not root_rotation:
+                aux_rot = self.root.getLocalRotation(frame)
+                self.root.setRotation(frame=frame, rotation=np.array((0, 0, 0)))
+            np_array[:,:,frame] = np.asarray([joint.getPosition(frame) for joint in list_of_joints])
+            if local_rotation:
+                np_array_rot[:,:,frame] = np.asarray([joint.getLocalRotation(frame) for joint in list_of_joints])
+            self.root.setTranslation(frame=frame, translation=aux_trans)
+            self.root.setRotation(frame=frame, rotation=aux_rot)
+        if not local_rotation:
+            return np_array
+        else:
+            return np_array, np_array_rot
+        #if lowerbody is False:
+            #list_of_joints = [joint if ['leg', 'Leg', 'Foot', 'foot', 'Toe', 'toe'] not in ]
+        #np_array = numpy.empty()
+        #for joint in self.getlistofjoints():
+        #    if joint is self.root:
+
+
+        #TODO Include translation
+
 
 class Joints:
 #    listofjointsnames = []
 #    listofjoints = []
-    
+
     def __init__(self, name, depth=0, parent=None):
         self.name = name
         self.depth = depth
@@ -291,7 +352,7 @@ class Joints:
         self.tposetrans = []
         if self.parent:
             self.parent.addChild(self)
-        #variável para debbugar o retargeting            
+        #variável para debbugar o retargeting
         self.frameswarning = []
 
         #Check when it is needed to recompute
@@ -306,7 +367,7 @@ class Joints:
         """
         Returns a list of references to the childrens of the joint. If index is equal or bigger
         than 0, return the index-th child
-        
+
         :type index: int
         :param index: Index-th child to be returned
         """
@@ -356,16 +417,16 @@ class Joints:
         for joint in path:
             yield joint
         yield self
-        
+
     def pathFromDepthToJoint(self, depth=-1):
         """
         Generator of the path between the joint located depth nodes up the hierarchy to the joint.
-        
+
         Example: Given the subtree node1, node2, node3, node4, node5 and node6. node5.pathFromDepthToJoint(2) will
         return the joints node3, node4 and node5.
-        
+
         :type depth: int
-        :param depth: Position above the current joint in the hierarchy 
+        :param depth: Position above the current joint in the hierarchy
         """
         # path = list(reversed([joint for joint in reversed(self)]))
         path = ([joint for joint in reversed(self)])[::-1]
@@ -380,7 +441,7 @@ class Joints:
         """
         Returns the kinematic path between a parentjoint up in the hierarchy to the
         current joint. If they are not in the same kinematic path (same subtree), raises error
-        
+
         Returns a list, not a generator!
         """
         path = []
@@ -399,34 +460,34 @@ class Joints:
 
     def addChild(self, item):
         """
-        Called after initialization of every joint except root 
-        
+        Called after initialization of every joint except root
+
         self: the parent joint to add child
         item: the child joint initialized
         """
         item.parent = self
         self.children.append(item)
-        
+
     def addOffset(self, offset):
         self.offset = offset
-        
+
     def addEndSite(self, endsite=None):
         self.endsite = endsite
         self.endsiteposition = []
 
     def __addBoneLength(self, bonelength):
         """
-        The BVH file format does not inform the length of the bone directly. 
-        The length can be calculated using the offset of its child, but in the 
+        The BVH file format does not inform the length of the bone directly.
+        The length can be calculated using the offset of its child, but in the
         case that the joint has multiple children, the first one is used.
         """
         self.length = bonelength
-        
+
     def addPosition(self, pos, frame):
         """
         In the first time, instantiate the global position variable of a joint.
         Then fill in values at the frame provided
-        
+
         self: joint to fill position
         pos: position of the joint in the frame
         frame: current frame
@@ -437,12 +498,12 @@ class Joints:
             if len(self.endsite) > 0:
                 self.endsiteposition = np.zeros([totalframes,3])
         self.position[frame,:] = pos.ravel()
-        
+
     def addOrientation(self, ori, frame):
         """
         In the first time, instantiate the global orientation variable of a joint.
         Then fill in values at the frame provided
-        
+
         self: joint to fill orientation
         ori: orientation of the joint in the frame
         frame: current frame
@@ -451,7 +512,7 @@ class Joints:
             totalframes = self.translation.shape[0]
             self.orientation = np.zeros([totalframes,3])
         self.orientation[frame,:] = ori.ravel()
-        
+
     def addEndSitePosition(self, pos, frame):
         self.endsiteposition[frame,:] = pos.ravel()
 
@@ -474,7 +535,7 @@ class Joints:
             transform = np.dot(transform, roty)
             transform = np.dot(transform, rotz)
         return transform
-    
+
     def getLocalTransformBaseRotation(self, frame):
         #OBSOLETE
         print('Do not use this function!')
@@ -510,42 +571,42 @@ class Joints:
                         transform = joint.getLocalTransformBaseRotation(frame)
                     else:
                         transform = joint.getLocalTransform(frame)
-                    if joint.parent: #If this joint is not the parent, multiply its local transform by its parent global transform
+                    if joint.parent:
+                        #If this joint is not the root, multiply its local transform by its parent global transform
                         transform = np.dot(joint.parent.__getCurrentGlobalTransform(),transform)
                     #parentTransform = np.copy(transform)
                     joint.__setCurrentGlobalTransform(np.copy(transform), frame)
-    
+
             if np.sum(transform, axis=1)[3] > 1:
                 print('getGlobalTransform: Something is wrong. Pleas check this case')
         return self.__getCurrentGlobalTransform()
-
 
     def getLocalRotation(self, frame=0):
         return self.rotation[frame]
 
     def getGlobalRotation(self, frame=0,includeBaseRotation=False):
         return mathutils.eulerFromMatrix(self.getGlobalTransform(frame, includeBaseRotation), self.order)
-    
+
     def getLocalTranslation(self, frame=0):
         try:
             return self.translation[frame]
         except:
             return self.translation[0]
-    
+
     def getGlobalTranslation(self, frame=0):
         """
         Doesn't include base rotation
         """
         transform = self.getGlobalTransform(frame)
         return np.asarray([transform[0,3],transform[1,3],transform[2,3]])
-     
+
     def getPosition(self, frame=0):
         # return np.dot(self.getGlobalTransform(frame, False), [0,0,0,1])[:-1]
         return self.getGlobalTransform(frame, False)[:-1,-1]
 
     def setRotation(self, frame, rotation):
         """
-        Updates rotation angles in the current frame and sets all global transform matrices down the hierarchy to 
+        Updates rotation angles in the current frame and sets all global transform matrices down the hierarchy to
         not reliable.
         Parameters
         ----------
@@ -566,7 +627,7 @@ class Joints:
 
     def setTranslation(self, frame, translation):
         """
-        Updates translation values in the current frame and sets all global transform matrices down the hierarchy to 
+        Updates translation values in the current frame and sets all global transform matrices down the hierarchy to
         not reliable.
         Parameters
         ----------
@@ -593,11 +654,11 @@ class Joints:
         transform = np.dot(self.getGlobalTransform(frame),transform)
         # return np.dot(transform,[0,0,0,1])[:-1]
         return np.asarray(transform[:-1,-1])
-    
+
     def getByName(self, name):
         """
         Returns the joint object with the provided name
-        
+
         self: first joint in the hierarchy
         name: name of the joint
         """
@@ -610,7 +671,7 @@ class Joints:
                 found = child.getByName(name)
                 if found:
                     return found
-            
+
     def getDepth(self):
         depth = 0
         joint = self
@@ -619,11 +680,11 @@ class Joints:
                 depth = depth + 1
                 joint = joint.parent
         return depth
-        
+
     def getLastDepth(self, depth, jointsInDepth = []):
         """
         Returns the last joint initializated with the depth provided
-        
+
         self: root of the hierarchy
         depth: hierarchy level
         jointsInDepth: list of joints at depth level
@@ -636,7 +697,7 @@ class Joints:
                     jointsInDepth.append(child)
                 child.getLastDepth(depth, jointsInDepth)
             return jointsInDepth[-1]
-    
+
     def getLength(self):
         """
         Returns the length of the bone (distance between the joint to its first
@@ -649,16 +710,16 @@ class Joints:
                 value = np.linalg.norm(self.getChildren(0).offset)
             self.__addBoneLength(value)
         return self.length
-    
+
     def getBaseRotation(self):
         """
         DON'T USE (it's not necessary)
-        
+
         Returns the base rotation matrix of the bone associated with this joint.
         The base rotation matrix rotates the vector [0 length 0] to the offset
         vector. "length" is computed through self.getLength and "offset" through
         self.offset.
-        
+
         Motion Capture File Formats Explained. M. Meredith S.Maddock
         """
         if len(self.baserotation)==0:
@@ -672,12 +733,12 @@ class Joints:
                 print('Instability found in getBaseRotation(%s)' % self.name)
             self.baserotation = euler
         return self.baserotation
-    
+
     def getRecalcRotationMatrix(self, frame):
         """
         ESSA FUNçÂO NÂO DEVE SER UTILIZADA
         Returns the recalculated local rotation matrix
-        
+
         Equation 4.9 from Motion Capture File Formats Explained. M. Meredith S.Maddock
         """
         #TODO: Eu preciso de um jeito de calcular a rotação global com a rotação base
@@ -685,11 +746,11 @@ class Joints:
         # apontando para o lugar errado
         #TODO: Função obsoleta, testei e não deu certo, fui por outro caminho.
         #ESSA FUNçÂO NÂO DEVE SER UTILIZADA
-        
+
         #Get the hierarchy from joint to root
         tree_parentjointTOroot = list([joint for joint in reversed(self)])
         stack = mathutils.matrixIdentity()
-        
+
         for joint in tree_parentjointTOroot:
             #Creates base matrix
             try:
@@ -698,7 +759,7 @@ class Joints:
                 print('Endsite used in getBaseRotation(joint)')
                 basematrix = mathutils.alignVectors(joint.endsite,[0,1.0,0]).T
             stack = np.dot(stack, basematrix)
-        
+
         matrix = np.dot(stack, mathutils.matrixR(self.getLocalRotation(frame), self.order))
         stack = stack.T
         try:
@@ -709,12 +770,12 @@ class Joints:
         stack = np.dot(stack, basematrix)
         matrix = np.dot(matrix, stack)
         return matrix
-        
-    
+
+
     def printHierarchy(self, hierarchy=[]):
         """
         Print hierarchy below self
-        
+
         self: first joint in the hierarchy
         hierarchy: formatted hierarchy list
         """
@@ -741,20 +802,20 @@ class Joints:
         if self.parent:
             value = self.parent.PoseBottomUp(value)
         return value
-    
 
-                
-    
+
+
+
     def GetBones(self, *args):
         raise Exception('This method is no longer available, please call getBones() from the Animation instance')
 #    def GetBones(self, bonesPositions=[], count=[], joint=None):
 #        """
 #        Returns an array to plot the animation using lines for bones and scatter
 #        to represent the joints.
-#        
+#
 #        axis 0: each line of the array contains eigth values to construct a line: x1, y1, z1, 1.0, x2, y2, z2, 1.0
 #        axis 2: each 2x2 matrix corresponds to a frame
-#        
+#
 #        TODO: Excluir os 1.0 daqui e do plotanimation
 #        """
 #        numberofframes = self.position.shape[0]
@@ -772,33 +833,33 @@ class Joints:
 #                es = joint.endsiteposition.T
 #                bonesPositions[len(count),:,:] = np.asarray([[cp[0,frame], cp[1,frame], cp[2,frame], 1.0, es[0,frame], es[1,frame], es[2,frame],1.0] for frame in range(numberofframes)]).T
 #                count.append([])
-#            
+#
 #        for child in joint.children:
 #            self.GetBones(bonesPositions,count,child)
 #        return bonesPositions
-    
+
 
 
 
 def WriteBVH(animation, path, name='_export', frametime = 0.00833333, refTPose = True, writeTranslation=True):
     """
     Create a bvh file with the motion contained in the animation.
-    
+
     :type animation: pyanimation.Animation
     :param animation: Animation containing the motion
-    
+
     :type path: str
     :param path: Full path to save the file
-    
+
     :type name: str
     :param name: Filename
-    
+
     :type frametime: float
     :param frametime: 1/(Frame per second), the time duration of each frame
-    
+
     :type refTPose: bool
     :param refTPose: If True, the first frame of the animation is the input TPose reference
-    
+
     :type writeTranslation: bool
     :param writeTranslation: If True, write translations for every joint. If False, only write translation for the root joint
     """
@@ -818,7 +879,7 @@ def WriteBVH(animation, path, name='_export', frametime = 0.00833333, refTPose =
                             file.write(str.format("\tCHANNELS 6 Xposition Yposition Zposition Xrotation Yrotation Zrotation\n"))
                         elif joint.order == 'ZXY':
                             file.write(str.format("\tCHANNELS 6 Xposition Yposition Zposition Zrotation Xrotation Yrotation\n"))
-                        
+
                     else:
                         if endsiteflag:
                             endsiteflag = False
@@ -855,14 +916,14 @@ def WriteBVH(animation, path, name='_export', frametime = 0.00833333, refTPose =
                 totalframes = animation.root.translation.shape[0]
                 #Check if the TPose should be added and check if at least the root has this information
                 #It assumes that if the root has this information, so do the other joints
-                
+
                 if refTPose == True and len(animation.root.tposerot)>0 and len(animation.root.tposetrans)>0:
                      totalframes = totalframes + 1
                 else:
                     refTPose = False
                 file.write(str.format('Frames: %i\n' % totalframes))
                 file.write(str.format('Frame Time: %.5f\n' % frametime))
-                
+
                 #Write the reference TPose line
                 if refTPose == True:
                     line = []
@@ -875,7 +936,7 @@ def WriteBVH(animation, path, name='_export', frametime = 0.00833333, refTPose =
                             line = line + [joint.tposerot[2], joint.tposerot[0], joint.tposerot[1]]
                     string = " ".join(str.format("%.2f"%number) for number in line)
                     file.write(string+'\n')
-                    
+
                 #Write the rest of the file
                 for frame in range(animation.root.translation.shape[0]):
                     line = []
@@ -889,10 +950,10 @@ def WriteBVH(animation, path, name='_export', frametime = 0.00833333, refTPose =
                     string = " ".join(str.format("%.2f"%number) for number in line)
                     file.write(string+'\n')
     print('File Saved: %s' % (path+'.bvh'))
-                    
 
-def GetBVHDataFromFile(path):      
-    
+
+def GetBVHDataFromFile(path):
+
     def GetMotionLine(joint, frame, translation=[], rotation=[]):
         """
         Get rotation and translation data for the joint at the given frame.
@@ -908,7 +969,7 @@ def GetBVHDataFromFile(path):
         for child in joint.children:
             GetMotionLine(child,frame, translation, rotation)
         #return translation, rotation
-    
+
     def Motion2NP(joint):
         """
         Transform rotation and position to numpy arrays
@@ -926,7 +987,7 @@ def GetBVHDataFromFile(path):
             joint.endsite = np.asarray(joint.endsite.split(' '),float)
         for child in joint:
             Motion2NP(child)
-    
+
 
     offsetList = []
     listofjoints = []
@@ -942,11 +1003,11 @@ def GetBVHDataFromFile(path):
                     root = Joints(name = line[5:-1])
                     lastJoint = root
                     listofjoints.append(line[5:-1])
-    
+
                     #Create the object of this file
                     filename = getfilename(path)[:-4]
                     bvhfile = Animation(filename, root)
-                    
+
                 elif line.find("JOINT") >= 0:
                     depth = line.count('\t')
                     if depth == 0:
@@ -955,18 +1016,18 @@ def GetBVHDataFromFile(path):
                     #Creates joint
                     lastJoint = Joints(name = line[line.find("JOINT")+6:-1], depth=depth, parent=parent)
                     listofjoints.append(line[line.find("JOINT")+6:-1])
-            
+
                 elif line.find("End Site") >= 0:
                     flagEndSite = True
                     listofjoints.append("End Site")
-                    
+
                 elif (line.find("OFFSET") >= 0) and (not flagEndSite):
                     lastJoint.addOffset(line[line.find("OFFSET")+7:-1])
                     offsetList.append(line[line.find("OFFSET")+7:-1])
                 elif (line.find("OFFSET") >= 0) and (flagEndSite):
                     lastJoint.addEndSite(line[line.find("OFFSET")+7:-1])
                     flagEndSite = False
-                
+
                 elif (line.find("CHANNELS")) >= 0:
                     X = line.find("Xrotation")
                     Y = line.find("Yrotation")
@@ -978,7 +1039,7 @@ def GetBVHDataFromFile(path):
                     else:
                         lastJoint.order("XYZ")
                         print("Invalid Channels order. XYZ chosen.")
-                
+
                 #if (line.find("MOTION")) >= 0:
                 #    index = data.index('MOTION\n')
                 #    totalFrame = data[index+1]
@@ -992,7 +1053,8 @@ def GetBVHDataFromFile(path):
                     bvhfile.frametime = float(line[12:])
                     flagDataBegin = True
                 else:
-                    pass
+                    print('Unexpected line: ')
+                    print(line)
             else:
                 GetMotionLine(root, line.split(' '), translation=[], rotation=[])
         # for counter in range(len(frames)):
@@ -1004,15 +1066,15 @@ def GetPositions(joint, frame=0, parentTransform=[], surfaceinfo=None, calibrati
     # Recebe o frame e a junta root, recursivamente calcula a posição de todos
     # os filhos para esse frame
     # Salva a posição em cada frame dentro de cada instância junta
-    
+
     # Caso precise recalcular as posições das juntas, os dados antigos precisam
     # ser apagados
-    
+
     #TODO: Orientation não significa nada, arrumar
-    
+
     rot = joint.rotation[frame]
     transform = joint.getLocalTransform(frame)
-    
+
     if len(parentTransform) == 0:
         #Se for root apenas calcula a posição
         positionfinal = np.dot(transform, [0,0,0,1])
@@ -1026,7 +1088,7 @@ def GetPositions(joint, frame=0, parentTransform=[], surfaceinfo=None, calibrati
     if not calibrating:
         joint.addPosition(np.asarray(positionfinal[:-1]), frame)
         joint.addOrientation(orientation, frame)
-    
+
     #Caso a junta tenha um endsite (é um end effector)
     if len(joint.endsite)>0:
         ee_transform = mathutils.matrixTranslation(joint.endsite[0], joint.endsite[1], joint.endsite[2])
@@ -1044,7 +1106,7 @@ def GetPositions(joint, frame=0, parentTransform=[], surfaceinfo=None, calibrati
                 if len(point.calibrationLocalTransform)>0:
                     local_transform = np.dot(transform,point.calibrationLocalTransform)
                     point.position.append(np.dot(local_transform,[0,0,0,1]))
-            
+
     # Get calibration local transform of the actor surface points for the mocap animation
     if calibrating:
         point = calibrating
@@ -1068,13 +1130,13 @@ def GetPositions(joint, frame=0, parentTransform=[], surfaceinfo=None, calibrati
                 p2p1 = p2-p1
                 d = np.linalg.norm(np.cross(p0p1,p0p2))/np.linalg.norm(p2p1)
                 point.radius = d
-                
+
 
     parentTransform = np.copy(transform)
     for child in joint.children:
         GetPositions(child, frame, parentTransform, surfaceinfo, calibrating)
     parentTransform=[]
-    
+
 
 def ReadFile(path, surfaceinfo=None):
     """

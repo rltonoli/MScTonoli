@@ -6,6 +6,9 @@ Created on Wed Aug  8 10:29:18 2018
 """
 
 import numpy as np
+import time
+
+
 
 def xaxis():
     return np.asarray([1,0,0])
@@ -55,122 +58,128 @@ def matrixRotation(angle, x=0, y=0, z=0,shape=4):
     if shape!=3 and shape!=4:
         print("Incompatible shape. Please choose 3 or 4")
         return None
-    
+
     length = np.sqrt(x*x+y*y+z*z)
     if length>0:
         x=x/length
         y=y/length
         z=z/length
-    
+
     cosi = np.cos(angle*np.pi/180)
     sine = np.sin(angle*np.pi/180)
-    
+
     matrix = np.zeros([4,4])
     matrix[0,0] = cosi + x*x*(1-cosi)
     matrix[0,1] = x*y*(1-cosi) - z*sine
     matrix[0,2] = x*z*(1-cosi) + y*sine
     matrix[0,3] = 0
-    
+
     matrix[1,0] = x*y*(1-cosi) + z*sine
     matrix[1,1] = cosi + y*y*(1-cosi)
     matrix[1,2] = y*z*(1-cosi) - x*sine
     matrix[1,3] = 0
-    
-    matrix[2,0] = x*z*(1-cosi) - y*sine 
+
+    matrix[2,0] = x*z*(1-cosi) - y*sine
     matrix[2,1] = y*z*(1-cosi) + x*sine
     matrix[2,2] = cosi + z*z*(1-cosi)
     matrix[2,3] = 0
-    
+
     matrix[3,0] = 0
     matrix[3,1] = 0
     matrix[3,2] = 0
     matrix[3,3] = 1
-    
+
     if shape==3:
 #        matrix = np.asarray([matrix[i,j] for i in range(3) for j in range(3)])
         matrix = shape4ToShape3(matrix)
-    
+
     return matrix
-    
-    
+
+
 
 def matrixMultiply(m0, m1):
     #Multiplication  of 3x3 by 3x3 matrices or 4x4 by 4x4 matrices
 #    teste0 = np.asarray(m0)
 #    teste1 = np.asarray(m1)
+    start=time.time()
+
     if type(m0)!=type(np.ndarray([])):
         try:
             m0 = np.asarray(m0)
         except:
             print("First argument could not be converted to a numpy array.")
             return None
-        
+
     if type(m1)!=type(np.ndarray([])):
         try:
             m1 = np.asarray(m1)
         except:
             print("Second argument could not be converted to a numpy array.")
             return None
-        
+
     if m0.shape[1]!=m1.shape[0]:
         print("The matrices cannot be multipled. Incompatible shapes.")
         return None
-    
+
     if m0.shape==m1.shape:
         if m0.shape[1]==3 and m1.shape[0]==3:
             matrix = np.zeros([3,3])
-            matrix[0,0] = m0[0,0]*m1[0,0] + m0[0,1]*m1[1,0] + m0[0,2]*m1[2,0] 
-            matrix[0,1] = m0[0,0]*m1[0,1] + m0[0,1]*m1[1,1] + m0[0,2]*m1[2,1] 
+            matrix[0,0] = m0[0,0]*m1[0,0] + m0[0,1]*m1[1,0] + m0[0,2]*m1[2,0]
+            matrix[0,1] = m0[0,0]*m1[0,1] + m0[0,1]*m1[1,1] + m0[0,2]*m1[2,1]
             matrix[0,2] = m0[0,0]*m1[0,2] + m0[0,1]*m1[1,2] + m0[0,2]*m1[2,2]
-            
-            matrix[1,0] = m0[1,0]*m1[0,0] + m0[1,1]*m1[1,0] + m0[1,2]*m1[2,0] 
-            matrix[1,1] = m0[1,0]*m1[0,1] + m0[1,1]*m1[1,1] + m0[1,2]*m1[2,1] 
+
+            matrix[1,0] = m0[1,0]*m1[0,0] + m0[1,1]*m1[1,0] + m0[1,2]*m1[2,0]
+            matrix[1,1] = m0[1,0]*m1[0,1] + m0[1,1]*m1[1,1] + m0[1,2]*m1[2,1]
             matrix[1,2] = m0[1,0]*m1[0,2] + m0[1,1]*m1[1,2] + m0[1,2]*m1[2,2]
-            
-            matrix[2,0] = m0[2,0]*m1[0,0] + m0[2,1]*m1[1,0] + m0[2,2]*m1[2,0] 
-            matrix[2,1] = m0[2,0]*m1[0,1] + m0[2,1]*m1[1,1] + m0[2,2]*m1[2,1] 
-            matrix[2,2] = m0[2,0]*m1[0,2] + m0[2,1]*m1[1,2] + m0[2,2]*m1[2,2] 
-        
-        
+
+            matrix[2,0] = m0[2,0]*m1[0,0] + m0[2,1]*m1[1,0] + m0[2,2]*m1[2,0]
+            matrix[2,1] = m0[2,0]*m1[0,1] + m0[2,1]*m1[1,1] + m0[2,2]*m1[2,1]
+            matrix[2,2] = m0[2,0]*m1[0,2] + m0[2,1]*m1[1,2] + m0[2,2]*m1[2,2]
+
+
         elif m0.shape[1]==4 and m1.shape[0]==4:
             matrix = np.zeros([4,4])
-            matrix[0,0] = m0[0,0]*m1[0,0] + m0[0,1]*m1[1,0] + m0[0,2]*m1[2,0] + m0[0,3]*m1[3,0] 
-            matrix[0,1] = m0[0,0]*m1[0,1] + m0[0,1]*m1[1,1] + m0[0,2]*m1[2,1] + m0[0,3]*m1[3,1] 
+            matrix[0,0] = m0[0,0]*m1[0,0] + m0[0,1]*m1[1,0] + m0[0,2]*m1[2,0] + m0[0,3]*m1[3,0]
+            matrix[0,1] = m0[0,0]*m1[0,1] + m0[0,1]*m1[1,1] + m0[0,2]*m1[2,1] + m0[0,3]*m1[3,1]
             matrix[0,2] = m0[0,0]*m1[0,2] + m0[0,1]*m1[1,2] + m0[0,2]*m1[2,2] + m0[0,3]*m1[3,2]
             matrix[0,3] = m0[0,0]*m1[0,3] + m0[0,1]*m1[1,3] + m0[0,2]*m1[2,3] + m0[0,3]*m1[3,3]
-            
-            matrix[1,0] = m0[1,0]*m1[0,0] + m0[1,1]*m1[1,0] + m0[1,2]*m1[2,0] + m0[1,3]*m1[3,0] 
-            matrix[1,1] = m0[1,0]*m1[0,1] + m0[1,1]*m1[1,1] + m0[1,2]*m1[2,1] + m0[1,3]*m1[3,1] 
+
+            matrix[1,0] = m0[1,0]*m1[0,0] + m0[1,1]*m1[1,0] + m0[1,2]*m1[2,0] + m0[1,3]*m1[3,0]
+            matrix[1,1] = m0[1,0]*m1[0,1] + m0[1,1]*m1[1,1] + m0[1,2]*m1[2,1] + m0[1,3]*m1[3,1]
             matrix[1,2] = m0[1,0]*m1[0,2] + m0[1,1]*m1[1,2] + m0[1,2]*m1[2,2] + m0[1,3]*m1[3,2]
             matrix[1,3] = m0[1,0]*m1[0,3] + m0[1,1]*m1[1,3] + m0[1,2]*m1[2,3] + m0[1,3]*m1[3,3]
-            
-            matrix[2,0] = m0[2,0]*m1[0,0] + m0[2,1]*m1[1,0] + m0[2,2]*m1[2,0] + m0[2,3]*m1[3,0] 
-            matrix[2,1] = m0[2,0]*m1[0,1] + m0[2,1]*m1[1,1] + m0[2,2]*m1[2,1] + m0[2,3]*m1[3,1] 
-            matrix[2,2] = m0[2,0]*m1[0,2] + m0[2,1]*m1[1,2] + m0[2,2]*m1[2,2] + m0[2,3]*m1[3,2] 
+
+            matrix[2,0] = m0[2,0]*m1[0,0] + m0[2,1]*m1[1,0] + m0[2,2]*m1[2,0] + m0[2,3]*m1[3,0]
+            matrix[2,1] = m0[2,0]*m1[0,1] + m0[2,1]*m1[1,1] + m0[2,2]*m1[2,1] + m0[2,3]*m1[3,1]
+            matrix[2,2] = m0[2,0]*m1[0,2] + m0[2,1]*m1[1,2] + m0[2,2]*m1[2,2] + m0[2,3]*m1[3,2]
             matrix[2,3] = m0[2,0]*m1[0,3] + m0[2,1]*m1[1,3] + m0[2,2]*m1[2,3] + m0[2,3]*m1[3,3]
-            
+
             matrix[3,0] = m0[3,0]*m1[0,0] + m0[3,1]*m1[1,0] + m0[3,2]*m1[2,0] + m0[3,3]*m1[3,0]
             matrix[3,1] = m0[3,0]*m1[0,1] + m0[3,1]*m1[1,1] + m0[3,2]*m1[2,1] + m0[3,3]*m1[3,1]
             matrix[3,2] = m0[3,0]*m1[0,2] + m0[3,1]*m1[1,2] + m0[3,2]*m1[2,2] + m0[3,3]*m1[3,2]
             matrix[3,3] = m0[3,0]*m1[0,3] + m0[3,1]*m1[1,3] + m0[3,2]*m1[2,3] + m0[3,3]*m1[3,3]
-        
+
     else:
         if m0.shape==(3,3) and m1.shape[0]==3:
             matrix = np.zeros([3,1])
             matrix[0] = m0[0,0]*m1[0] + m0[0,1]*m1[1] + m0[0,2]*m1[2]
             matrix[1] = m0[1,0]*m1[0] + m0[1,1]*m1[1] + m0[1,2]*m1[2]
             matrix[2] = m0[2,0]*m1[0] + m0[2,1]*m1[1] + m0[2,2]*m1[2]
-            
+
         elif m0.shape==(4,4) and m1.shape[0]==4:
             matrix = np.zeros([4,1])
             matrix[0] = m0[0,0]*m1[0] + m0[0,1]*m1[1] + m0[0,2]*m1[2] + m0[0,3]*m1[3]
             matrix[1] = m0[1,0]*m1[0] + m0[1,1]*m1[1] + m0[1,2]*m1[2] + m0[1,3]*m1[3]
             matrix[2] = m0[2,0]*m1[0] + m0[2,1]*m1[1] + m0[2,2]*m1[2] + m0[2,3]*m1[3]
             matrix[3] = m0[3,0]*m1[0] + m0[3,1]*m1[1] + m0[3,2]*m1[2] + m0[3,3]*m1[3]
-            
+
         else:
             print("The matrices cannot be multipled. Incompatible shapes.")
             return None
+
+
+    matrixMultiply.time += time.time()-start
+    matrixMultiply.count += 1
     return matrix
 
 
@@ -182,11 +191,12 @@ def inverseMatrix(m0):
         print('Matrix not invertible.')
         return None
     return matrix
-        
-    
+
+
 def projectedBarycentricCoord(p, p1, p2, p3):
-    #Algorithm from Heidrich, Wolfgang. 
-    #"Computing the barycentric coordinates of a projected point." 
+    start = time.time()
+    #Algorithm from Heidrich, Wolfgang.
+    #"Computing the barycentric coordinates of a projected point."
     #Journal of Graphics Tools 10, no. 3 (2005): 9-12.
     # p: point. p1, p2 and p3: triangle's vertices points
     if len(p)>3: p=p[:3]
@@ -197,7 +207,7 @@ def projectedBarycentricCoord(p, p1, p2, p3):
     p2 = np.asarray(p2)
     p3 = np.asarray(p3)
     inside = False
-    
+
     u = p2-p1
     v = p3-p1
     b = np.zeros(3)
@@ -213,20 +223,67 @@ def projectedBarycentricCoord(p, p1, p2, p3):
         if b[1]>=0 and b[1]<=1:
             if b[2]>=0 and b[2]<=1:
                 inside = True
-    projectedpoint = b[0]*p1 + b[1]*p2 + b[2]*p3
-    distance = p-projectedpoint
-    
-    return n, b, distance, projectedpoint, inside
+    #b = b/np.linalg.norm(b)
+    b_cartesian = b[0]*p1 + b[1]*p2 + b[2]*p3
+    dispvector = p-b_cartesian
+    n = n/np.linalg.norm(n)
+
+    projectedBarycentricCoord.count += 1
+    projectedBarycentricCoord.time += time.time()-start
+    return n, b, dispvector, b_cartesian, inside
+
+def clampedBarycentric(p,p1,p2,p3):
+    start = time.time()
+    # Algorithm from Heidrich, Wolfgang.
+    # "Computing the barycentric coordinates of a projected point."
+    # Journal of Graphics Tools 10, no. 3 (2005): 9-12.
+    # p: point. p1, p2 and p3: triangle's vertices points
+    if len(p)>3: p=p[:3]
+    if len(p1)>3: p1=p1[:3]
+    if len(p2)>3: p2=p2[:3]
+    if len(p3)>3: p3=p3[:3]
+    p1 = np.asarray(p1)
+    p2 = np.asarray(p2)
+    p3 = np.asarray(p3)
+    inside = False
+
+    u = p2-p1
+    v = p3-p1
+    b = np.zeros(3)
+    #Algorithm:
+    # n = unitVector(np.cross( u, v ))
+    n = np.cross( u, v )
+    oneOver4ASquared = 1.0 / np.dot( n, n )
+    w = p - p1
+    b[2]= np.dot( np.cross( u, w ), n ) * oneOver4ASquared
+    b[1]= np.dot( np.cross( w, v ), n ) * oneOver4ASquared
+    b[0]= 1.0 - b[1] - b[2]
+    if b[0]>=0 and b[0]<=1:
+        if b[1]>=0 and b[1]<=1:
+            if b[2]>=0 and b[2]<=1:
+                inside = True
+    b = np.clip(b,0,np.inf)
+    b = b/np.sum(b)
+    b_cartesian = b[0]*p1 + b[1]*p2 + b[2]*p3
+    dispvector = p-b_cartesian
+    n = n/np.linalg.norm(n)
+
+    clampedBarycentric.count += 1
+    clampedBarycentric.time += time.time()-start
+    return n, b, dispvector, b_cartesian, inside
 
 def barycentric2cartesian(bary, v1, v2, v3):
     if len(bary)>3: bary=bary[:3]
     if len(v1)>3: v1=v1[:3]
     if len(v2)>3: v2=v2[:3]
     if len(v3)>3: v3=v3[:3]
+    u = v2-v1
+    v = v3-v1
+    n = np.cross( u, v )
     cart = np.zeros(3)
     cart = bary[0]*v1 + bary[1]*v2 + bary[2]*v3
-    return cart
-    
+    return cart, n
+
 def getCentroid(p1,p2,p3):
     if len(p1)>3: p1=p1[:3]
     if len(p2)>3: p2=p2[:3]
@@ -238,13 +295,13 @@ def getCentroid(p1,p2,p3):
     v = p3-p1
     n = unitVector(np.cross( u, v ))
     return np.mean([p1,p2,p3], axis=0), n
-    
+
 def distFromCentroid(p, p1, p2, p3):
     if len(p)>3: p=p[:3]
     centroid, n = getCentroid(p1,p2,p3)
     distance = p-centroid
     return centroid, distance ,n
-    
+
 
 
 def matrixSkew(vec):
@@ -270,10 +327,11 @@ def alignVectors(a,b,shape=3):
     """
     Returns a rotation matrix to align vector a onto vector b
     #https://math.stackexchange.com/questions/180418/calculate-rotation-matrix-to-align-vector-a-to-vector-b-in-3d
-    
-    
+
+
     ESSA MATRIZ NÃO É CONSTRUIDA RxRyRz, MAS A PARTIR DE UM EIXO
     """
+    start=time.time()
     if (shape != 3) and (shape != 4):
         print('Shape %i not supported to represent a rotation matrix at mathutils.alignVectores(). Please choose 3 or 4.' % shape)
         return matrixIdentity(3)
@@ -287,14 +345,14 @@ def alignVectors(a,b,shape=3):
         #If they point into the same direction, return identity matrix
         if (a_norm == b_norm).all():
             return matrixIdentity(shape)
-        #If they point into the 
+        #If they point into the
         elif (a_norm == -b_norm).all():
             #Hardcoded case when they point into opposite directions of y
             dot_a = np.dot(a_norm,[0,1,0])
             dot_b = np.dot(b_norm,[0,1,0])
             if (dot_a == 1 or dot_a == -1) and (dot_b == 1 or dot_b == -1):
                 return matrixRotation(180,0,0,1, shape)
-        
+
         print('Invalid vectors in mathutils.alignVectors(a,b). Vectors:')
         print(a)
         print(b)
@@ -305,6 +363,10 @@ def alignVectors(a,b,shape=3):
     matrix = rotationMatrix + skew + np.dot(skew,skew)*(1/(1+cos))
     if shape==4:
         matrix = shape3ToShape4(matrix)
+
+
+    alignVectors.time += time.time()-start
+    alignVectors.count += 1
     return matrix
 
 def angleBetween(a,b):
@@ -314,16 +376,19 @@ def angleBetween(a,b):
     http://www.euclideanspace.com/maths/geometry/rotations/conversions/angleToEuler/index.htm
     https://en.wikipedia.org/wiki/Rotation_formalisms_in_three_dimensions
     """
+    start = time.time()
     a_norm = a / np.linalg.norm(a)
     b_norm = b / np.linalg.norm(b)
     axis = np.cross(a_norm, b_norm)
     axis_norm = axis/np.linalg.norm(axis)
     angle = np.arccos(np.dot(a_norm, b_norm))
+    angleBetween.time += time.time() - start
+    angleBetween.count += 1
     return angle, axis_norm
     #axisAngleToEuler(aux_vector_norm,angle)
 
 #def axisAngleToEuler(axis,angle):
-    
+
 
 def isnear(x,y, epsilon = 1e-4):
     if abs(x-y) < epsilon:
@@ -334,13 +399,13 @@ def isnear(x,y, epsilon = 1e-4):
 def isequal(a1, a2, epsilon=1e-4):
     """
     Check if array v1 and array v2 are equal element-wise
-    
+
     :type a1: numpy.ndarray
     :param a1: First array
-    
+
     :type a2: numpy.ndarray
     :param a2: Second array
-    
+
     :type epsilon: numpy.ndarray
     :param epsilon: Error margin
     """
@@ -354,7 +419,7 @@ def isequal(a1, a2, epsilon=1e-4):
         for i in range(a1.ndim):
             if a1.shape[i] != a2.shape[i]:
                 raise ValueError('Vectors must have the same length.')
-                
+
     equal = [isnear(a1.flat[i],a2.flat[i], epsilon) for i in range(a1.size)]
     if False in equal:
         return False
@@ -402,19 +467,19 @@ def eulerFromMatrix(matrix, order='ZXY'):
     https://gist.github.com/crmccreary/1593090
     https://research.cs.wisc.edu/graphics/Courses/cs-838-1999/Jeff/BVH.html
     NOTE: This function will work only with matrices created using RxRyRz
-    
+
     order = 'XYZ'
     ((RxRy)Rz) =
         cos(y)          -sen(z)cos(y)                       sen(y)
         sen(x)sen(y)    -sen(x)sen(y)sen(z)+cos(x)cos(z)    -sen(x)cos(y)
         -sen(y)cos(x)   sen(y)cos(x)sen(z)+sen(x)cos(z)     cos(x)cos(y)
-        
+
     order = 'ZXY'
     ((RzRx)Ry) =
         cos(y)cos(z)-sen(x)sen(y)sen(z)     -cos(x)sen(z)   cos(z)sen(y)+sen(x)sen(z)cos(y)
         cos(y)sen(z)+sen(x)sen(y)cos(z)     cos(x)cos(z)    sen(y)sen(z)-sen(x)cos(y)cos(z)
         -cos(x)sen(y)                       sen(x)          cos(x)cos(y)
-    
+
         if cosX = 0 and sen(x) = -1:
             x = -pi/2
             matrix[0,0] = cy*cz+sy*sz = cos(z-y)
@@ -431,13 +496,14 @@ def eulerFromMatrix(matrix, order='ZXY'):
             matrix[1,2] = sy*sz-cy*cz = -cos(y+z) = -matrix[0,0]
             z + y = atan2(matrix[1,0], -matrix[0,0])
             z = -y + atan2(matrix[1,0], -matrix[0,0])
-            
+
     :type matrix: numpy.ndarray
     :param matrix: 3x3 rotation matrix or 4x4 transform matrix
-    
+
     :type order: string
     :param order: order of rotation (working only for ZXY)
     """
+    start= time.time()
     warning = None
     if type(matrix)!=np.ndarray:
         try:
@@ -445,10 +511,10 @@ def eulerFromMatrix(matrix, order='ZXY'):
         except:
             print('Could not convert matrix to numpy array')
             return None
-    
+
     if matrix.shape[0] == 4:
         matrix = shape4ToShape3(matrix)
-        
+
 #    if order == 'ZXY':
 #        x = np.arcsin(matrix[2,1])
 #        y = np.arcsin(-matrix[2,0]/np.cos(x))
@@ -477,7 +543,7 @@ def eulerFromMatrix(matrix, order='ZXY'):
             else:
                 x1,y1,z1=0,0,0
 
-      
+
     #TODO: Corrigir
     elif order == 'XYZ':
         y1 = np.arccos(matrix[0,0])
@@ -486,13 +552,18 @@ def eulerFromMatrix(matrix, order='ZXY'):
         x2,y2,z2 =0,0,0
         if matrix[0,0] < 0.01:
             warning = True
-            
+
 #    return np.asarray([x1,y1,z1])*180/np.pi, np.asarray([x2,y2,z2])*180/np.pi, warning
+
+    eulerFromMatrix.count+=1
+    eulerFromMatrix.time+=time.time()-start
     return np.asarray([x1,y1,z1])*180/np.pi, warning
 
 
 def eulerFromVector(vector, twistaxis = 'y'):
+
     #TODO: FAZER OS OUTROS CASOS
+    start=time.time()
     vector = unitVector(np.asarray(vector))
     xunit = np.asarray([1,0,0])
     yunit = np.asarray([0,1,0])
@@ -506,7 +577,7 @@ def eulerFromVector(vector, twistaxis = 'y'):
             return 0,-thetaz
         else:
             thetax = np.arccos(dotx)
-            
+
         dotz = np.dot([x,y,0], [0,1,0])
 #        if dotz==0:
 #            print('2')
@@ -515,6 +586,8 @@ def eulerFromVector(vector, twistaxis = 'y'):
 #        else:
         thetaz = np.arccos(dotz)
     #elif twistaxis....
+    eulerFromVector.count+=1
+    eulerFromVector.time+=time.time()-start
     return -thetax,-thetaz
 
 
@@ -545,7 +618,7 @@ def matrixR(R, order='ZXY', shape=3):
     if R.shape[0] != 3:
         print('Wrong rotation vector shape. Shape = %f and not 3' % R.shape[0])
         return None
-        
+
     rotx = matrixRotation(R[0],1,0,0)
     roty = matrixRotation(R[1],0,1,0)
     rotz = matrixRotation(R[2],0,0,1)
@@ -558,12 +631,12 @@ def matrixR(R, order='ZXY', shape=3):
     if shape == 3:
         matrix = shape4ToShape3(matrix)
     return matrix
-        
+
 
 def transformMatrix(R, T, order='ZXY'):
     """
     Creates transform matrix.
-    
+
     R: Size 3 vector containing the rotation over the x-, y- and z-axis
     T: Size 3 vector containing x, y and z translation
     """
@@ -591,7 +664,7 @@ def transformMatrix(R, T, order='ZXY'):
 def shape4ToShape3(matrix):
     """
     Get the rotation matrix from the transform matrix
-    
+
     matrix: 4x4 transform matrix
     """
     if type(matrix)!=np.ndarray:
@@ -613,11 +686,11 @@ def shape4ToShape3(matrix):
                             [matrix[2,0],matrix[2,1],matrix[2,2]]
                         ])
     return new_matrix
-    
+
 def shape3ToShape4(matrix):
     """
     Expand 3x3 matrix to 4x4
-    
+
     matrix: 3x3 matrix
     """
     if type(matrix)!=np.ndarray:
@@ -644,39 +717,39 @@ def shape3ToShape4(matrix):
 def matrixError(m1, m2):
     """
     Calcula a diferença entre as duas matrizes.
-    
+
     :type m1: numpy.ndarray
     :param m1: Matrix to subtract
-    
+
     :type m2: numpy.ndarray
     :param m2: Matrix to be subtracted
     """
     return m2-m1
-    
-    
+
+
 def projection(a, b):
     """
     Compute the projection of a onto b.
     Exemple: https://math.boisestate.edu/~jaimos/notes/275/vector-proj.html
-    
+
     :type a: numpy.ndarray
     :param a: Vector to be projected onto the other vector
-    
+
     :type b: numpy.ndarray
     :param b: Projection target vector
     """
     return (np.dot(a,b)/np.dot(b,b))*b
-    
+
 
 
 def capsuleCollision(point, p0, p1, capradius):
     """
     Creates a capsule (extruded sphere): a cylinder with radius capradius and two half spheres (top and bottom) with radius capradius
     Returns the normalized intersection LOCAL cylindric coordinates and the intersection GLOBAL euclidean coordinates
-    
+
     Surface: x^2+y^2+(1/4)*(|z-caplength|+|z+caplength| - 2*caplength)^2 - capradius^2 = 0
-    
-    
+
+
     Example:
     caplength = 10
     capradius = 2
@@ -702,28 +775,29 @@ def capsuleCollision(point, p0, p1, capradius):
         x^2+y^2+ 1 - 4 = 0
         x^2+y^2 - 3 = 0
         (Analogous to z=5)
-    
+
     Finding surface starting from [0,0,0] and moving along direction=[a,b,c] with step=t
     (a*t)^2+(b*t)^2+(1/4)*(|(z*t)-caplength|+|(z*t)+caplength| - 2*caplength)^2 - capradius^2 = 0
-    
+
     :type point: numpy.ndarray
     :param point: Point outside the capsule to give the direction of the collinsion vector (from the origin to the point)
-    
+
     :type p0: numpy.ndarray
     :param p0: Cylinder "bottom" point, first point
-        
+
     :type p1: numpy.ndarray
     :param p1: Cylinder "top" point, first point
-        
+
     :type capradius: int
     :param capradius: Cylinder (and half spheres) radius
     """
+    start=time.time()
     def printDebug():
         print('Point: %.2f,%.2f,%.2f' %(point[0],point[1],point[2]))
         print('P0: %.2f,%.2f,%.2f' %(p0[0],p0[1],p0[2]))
         print('P1: %.2f,%.2f,%.2f' %(p1[0],p1[1],p1[2]))
         print('Radius: %.2f' % capradius)
-        
+
     if type(p0)!=np.ndarray: p0=np.asarray(p0)
     if type(p1)!=np.ndarray: p1=np.asarray(p1)
     capaxis = p1-p0
@@ -745,7 +819,7 @@ def capsuleCollision(point, p0, p1, capradius):
     rotatedPoint = np.dot(mTransform, np.append(point,1))[:-1]
     #Get unit vector pointing to point (direction)
     direction = unitVector(rotatedPoint)
-    #Get max value of the step (assuming that the point is outside cylinder. 
+    #Get max value of the step (assuming that the point is outside cylinder.
     #That is, the line passing through the origin and the point will always cross the capsule surface)
     #https://math.oregonstate.edu/home/programs/undergrad/CalculusQuestStudyGuides/vcalc/lineplane/lineplane.html
     tmax = np.linalg.norm(rotatedPoint)
@@ -775,14 +849,14 @@ def capsuleCollision(point, p0, p1, capradius):
         sphere = 1
         if theta is None: printDebug()
         if theta is np.nan: printDebug()
-        
+
     elif  intersection[2] <= -caplength:
         normal = intersection - np.asarray([0,0,-caplength])
         theta = np.arccos(np.clip(normal[2]/capradius,-1,1))
         sphere = -1
         if theta is None: printDebug()
         if theta is np.nan: printDebug()
-    else: 
+    else:
         #cylinder surface normal
         normal = np.asarray([intersection[0],intersection[1],0])
         theta = None
@@ -794,31 +868,34 @@ def capsuleCollision(point, p0, p1, capradius):
     #Note: The cases that the intersection occurs on the half spheres, the radius is NOT equal to capradius!
     psi = np.arctan2(intersection[1],intersection[0])
     #cylindcoord = np.asarray([rho/capradius, psi, intersection[2]])
-    #This is clearly not the best way to perform the normalization but for similar 
+    #This is clearly not the best way to perform the normalization but for similar
     #radius and length sizes it should be enough
     z = intersection[2]/ (caplength)
     capsulecoord = np.asarray([theta, psi, z, sphere])
     intersection = np.dot(mInv,np.append(intersection,1))[:-1]
+    capsuleCollision.count+=1
+    capsuleCollision.time+=time.time()-start
     return capsulecoord, intersection, normal
-    
+
 
 
 def capsuleCartesian(capsulecoord, p0, p1, capradius):
     """
     Transforms the normalized cylindrical coordinates from capsuleCollision to denormalized cartesian coordinates
-    
+
     :type capsulecoord: numpy.ndarray
     :param point: Normalized capsule coordinates from capsuleCollision()
-    
+
     :type p0: numpy.ndarray
     :param p0: Cylinder "bottom" point, first point
-        
+
     :type p1: numpy.ndarray
     :param p1: Cylinder "top" point, first point
-        
+
     :type capradius: int
     :param capradius: Cylinder (and half spheres) radius
     """
+    start=time.time()
     if type(p0)!=np.ndarray: p0=np.asarray(p0)
     if type(p1)!=np.ndarray: p1=np.asarray(p1)
     capaxis = p1-p0
@@ -833,7 +910,7 @@ def capsuleCartesian(capsulecoord, p0, p1, capradius):
     mRotate = alignVectors([0,0,1], capaxis, shape=4)
     #Translating center of the vector to the origin
     mTranslate = matrixTranslation(center[0],center[1],center[2])
-    #Compose inverse transform because 
+    #Compose inverse transform because
     mTransform = np.dot(mTranslate, mRotate)
     r = capradius
     theta = capsulecoord[0]
@@ -844,33 +921,35 @@ def capsuleCartesian(capsulecoord, p0, p1, capradius):
         xyz = np.asarray([r*np.sin(theta)*np.cos(psi), r*np.sin(theta)*np.sin(psi), z])
     else:
         xyz = np.asarray([r*np.cos(psi), r*np.sin(psi), z])
-    
+
     #Get surface normal at intersection
     if xyz[2] >= caplength:
         #sphere surface normal (the unit vector point from the center of the sphere to the intersection point )
         normal = xyz - np.asarray([0,0,caplength])
     elif xyz[2] <= -caplength:
         normal = xyz - np.asarray([0,0,-caplength])
-    else: 
+    else:
         #cylinder surface normal
         normal = np.asarray([xyz[0],xyz[1],0])
-    normal = unitVector(normal)  
+    normal = unitVector(normal)
     normal = np.dot(mRotate, np.append(normal,1))[:-1]
     intersection = np.dot(mTransform, np.append(xyz,1))[:-1]
-    
+
+    capsuleCartesian.count+=1
+    capsuleCartesian.time+=time.time()-start
     return intersection, normal
-    
+
 
 def cosBetween(a, b, absolute = True):
     """
     Return the cosine of the angle between vectors a and b, the absolute value is returned is absolute = True.
-    
+
     :type a: numpy.ndarray
     :param a: Vector one
-        
+
     :type b: numpy.ndarray
     :param b: Vector two
-        
+
     :type absolute: int
     :param absolute: Return absolute value. True for yes, False for no.
     """
@@ -878,7 +957,37 @@ def cosBetween(a, b, absolute = True):
         return np.abs(np.dot(unitVector(a),unitVector(b)))
     else:
         return np.dot(unitVector(a),unitVector(b))
-    
+
+
+def printLog():
+    print('capsuleCartesian: %i %f' % (capsuleCartesian.count, capsuleCartesian.time))
+    print('capsuleCollision: %i %f' % (capsuleCollision.count, capsuleCollision.time))
+    print('eulerFromVector: %i %f' % (eulerFromVector.count, eulerFromVector.time))
+    print('eulerFromMatrix: %i %f' % (eulerFromMatrix.count, eulerFromMatrix.time))
+    print('angleBetween: %i %f' % (angleBetween.count, angleBetween.time))
+    print('alignVectors: %i %f' % (alignVectors.count, alignVectors.time))
+    print('projectedBarycentricCoord: %i %f' % (projectedBarycentricCoord.count, projectedBarycentricCoord.time))
+    print('clampedBarycentric: %i %f' % (clampedBarycentric.count, clampedBarycentric.time))
+    print('matrixMultiply: %i %f' % (matrixMultiply.count, matrixMultiply.time))
+
+capsuleCartesian.count=0
+capsuleCartesian.time = 0
+capsuleCollision.count=0
+capsuleCollision.time=0
+eulerFromVector.count=0
+eulerFromVector.time=0
+eulerFromMatrix.count=0
+eulerFromMatrix.time=0
+angleBetween.count=0
+angleBetween.time=0
+alignVectors.time=0
+alignVectors.count=0
+projectedBarycentricCoord.count=0
+projectedBarycentricCoord.time=0
+matrixMultiply.time=0
+matrixMultiply.count=0
+clampedBarycentric.time=0
+clampedBarycentric.count=0
 
 #cilcoord, inter = capsuleCollision([0,10,0],[0,1,0],[0,-1,0],5)
 #print(inter)
@@ -892,7 +1001,7 @@ def cosBetween(a, b, absolute = True):
 #rot = matrixRotation(45,0,0,1,4)
 #vector = [1,0,0,0]
 #result = matrixMultiply(rot,vector)
-    
+
 #thetax,thetaz = eulerFromVector([0,0,1])
 #print(thetax*180/np.pi)
 #print(thetaz*180/np.pi)
