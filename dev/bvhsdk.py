@@ -343,6 +343,7 @@ class Joints:
         self.translation = []
         self.rotation = []
         self.order = []
+        self.n_channels = 0
         self.position = []
         self.orientation = []
         self.egocoord = []
@@ -924,7 +925,7 @@ def WriteBVH(animation, path, name='_export', frametime = 0.00833333, refTPose =
                 file.write(str.format('Frames: %i\n' % totalframes))
                 file.write(str.format('Frame Time: %.5f\n' % frametime))
 
-                #Write the reference TPose line
+                # Write the reference TPose line
                 if refTPose == True:
                     line = []
                     for joint in animation.getlistofjoints():
@@ -952,83 +953,64 @@ def WriteBVH(animation, path, name='_export', frametime = 0.00833333, refTPose =
     print('File Saved: %s' % (path+'.bvh'))
 
 
-def GetBVHDataFromFile(path):
+def GetBVHDataFromFile(path, skipmotion=False):
+    """
+    Read a bvh file.
 
-    def GetMotionLine(joint, frame, translation=[], rotation=[]):
-        """
-        Get rotation and translation data for the joint at the given frame.
-        """
-        #print(translation)
-        #translation.append(frame.split(' ')[len(translation)*6:len(translation)*6+3])
-        translation.append(frame[len(translation)*6:len(translation)*6+3])
-        #print(translation)
-        #rotation.append(frame.split(' ')[len(rotation)*6+3:len(rotation)*6+6])
-        rotation.append(frame[len(rotation)*6+3:len(rotation)*6+6])
-        joint.translation.append(translation[-1])
-        joint.rotation.append(rotation[-1])
-        for child in joint.children:
-            GetMotionLine(child,frame, translation, rotation)
-        #return translation, rotation
+    :type path: string or path
+    :param path: Complete path to the bvh file
 
-    def Motion2NP(joint):
-        """
-        Transform rotation and position to numpy arrays
-        """
-        joint.translation = np.asarray(joint.translation, float)
-        joint.rotation = np.asarray(joint.rotation, float)
-        joint.offset = np.asarray(joint.offset.split(' '),float)
-        if joint.order=="ZXY":
-            #MUDAR PARA SET ROTATION
-            aux = np.copy(joint.rotation[:,0])
-            joint.rotation[:,0] = np.copy(joint.rotation[:,1])
-            joint.rotation[:,1] = np.copy(joint.rotation[:,2])
-            joint.rotation[:,2] = np.copy(aux)
-        if joint.endsite:
-            joint.endsite = np.asarray(joint.endsite.split(' '),float)
-        for child in joint:
-            Motion2NP(child)
+    :type skipmotion: bool
+    :param skipmotion: Whether to read the motion of the file (False) or to
+    read only the skeleton definition.
 
-
-    offsetList = []
-    listofjoints = []
+    :rtype bvhfile: Animation
+    :rparam bvhfile: An Animation object containing the information from the
+    bvh file.
+    """
+    # TODO: Account for BVH files without translation
+    frame = 0
+    bvhfile = None
     with open(path) as file:
-        #data = [line for line in file]
         flagEndSite = False
-        flagDataBegin = False
-        #for line in data:
+        flagMotionDataBegin = False
         for line in file:
-            if not flagDataBegin:
+            if not flagMotionDataBegin:
+                # Starts here (first joint)
                 if line.find("ROOT") >= 0:
-                    #Creates root joint
-                    root = Joints(name = line[5:-1])
+                    # Creates root joint
+                    root = Joints(name=line[5:-1])
                     lastJoint = root
-                    listofjoints.append(line[5:-1])
 
-                    #Create the object of this file
+                    # Create the Animation object of this file
                     filename = getfilename(path)[:-4]
                     bvhfile = Animation(filename, root)
 
+                # Every other joint goes through here
+                # Identention should be tabular or with pairs of spaces
                 elif line.find("JOINT") >= 0:
                     depth = line.count('\t')
                     if depth == 0:
                         depth = line[:line.find('JOINT')].count(' ')/2
                     parent = root.getLastDepth(depth-1)
-                    #Creates joint
-                    lastJoint = Joints(name = line[line.find("JOINT")+6:-1], depth=depth, parent=parent)
-                    listofjoints.append(line[line.find("JOINT")+6:-1])
+                    # Creates joint
+                    lastJoint = Joints(name=line[line.find("JOINT")+6:-1],
+                                       depth=depth, parent=parent)
 
                 elif line.find("End Site") >= 0:
                     flagEndSite = True
-                    listofjoints.append("End Site")
 
                 elif (line.find("OFFSET") >= 0) and (not flagEndSite):
-                    lastJoint.addOffset(line[line.find("OFFSET")+7:-1])
-                    offsetList.append(line[line.find("OFFSET")+7:-1])
+                    lastJoint.addOffset(np.asarray(line[line.find("OFFSET")+7:-1].split(' '),float))
                 elif (line.find("OFFSET") >= 0) and (flagEndSite):
                     lastJoint.addEndSite(line[line.find("OFFSET")+7:-1])
                     flagEndSite = False
 
                 elif (line.find("CHANNELS")) >= 0:
+                    lastJoint.n_channels = int(line[line.find("CHANNELS")+9])
+                    if lastJoint.n_channels != 6:
+                        print("Number of channels must be 6")
+                        raise ValueError
                     X = line.find("Xrotation")
                     Y = line.find("Yrotation")
                     Z = line.find("Zrotation")
@@ -1040,26 +1022,32 @@ def GetBVHDataFromFile(path):
                         lastJoint.order("XYZ")
                         print("Invalid Channels order. XYZ chosen.")
 
-                #if (line.find("MOTION")) >= 0:
-                #    index = data.index('MOTION\n')
-                #    totalFrame = data[index+1]
-                #    frameTime = data[index+2]
-                    #frames = data[index+3:]
                 elif (line.find("Frames")) >= 0:
-                    # bvhfile.frames = int(data[index+1][8:])
                     bvhfile.frames = int(line[8:])
+                    for joint in bvhfile.getlistofjoints():
+                        joint.translation = np.empty(shape=(bvhfile.frames, 3))
+                        joint.rotation = np.empty(shape=(bvhfile.frames, 3))
                 elif (line.find("Frame Time")) >= 0:
-                    # bvhfile.frametime = float(data[index+2][12:])
                     bvhfile.frametime = float(line[12:])
-                    flagDataBegin = True
+                    flagMotionDataBegin = True
                 else:
-                    print('Unexpected line: ')
-                    print(line)
-            else:
-                GetMotionLine(root, line.split(' '), translation=[], rotation=[])
-        # for counter in range(len(frames)):
-        #     GetMotionLine(root, frames[counter], translation=[], rotation=[])
-    Motion2NP(bvhfile.root)
+                    # Lines only with { and } pass through here
+                    pass
+            elif flagMotionDataBegin and not skipmotion:
+                line = [float(item) for item in line.replace('\n', '').split(' ') if item]
+                for i, joint in enumerate(bvhfile.getlistofjoints()):
+                    joint.translation[frame] = np.asarray(line[i*6:i*6+3],
+                                                          float)
+                    joint.rotation[frame] = np.asarray(line[i*6+3:i*6+6],
+                                                       float)
+                frame = frame + 1
+
+    # Check channels' order
+    if not skipmotion:
+        for joint in bvhfile.getlistofjoints():
+            if joint.order == "ZXY":
+                joint.rotation = joint.rotation[:, [2, 0, 1]]
+
     return bvhfile
 
 def GetPositions(joint, frame=0, parentTransform=[], surfaceinfo=None, calibrating=None):
