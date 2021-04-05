@@ -1,15 +1,5 @@
-# -*- coding: utf-8 -*-
-"""
-Created on Sun Aug  5 17:47:19 2018
-
-@author: Rodolfo Luis Tonoli
-
-bvh importer based on https://github.com/20tab/bvh-python/blob/master/bvh.py
-
-"""
 import numpy as np
 import plotanimation
-import matplotlib.pyplot as plt
 import mathutils
 from os.path import basename as getfilename
 from os.path import join as pathjoin
@@ -248,25 +238,23 @@ class Animation:
 
         plotanimation.PosePlotBonesSurface(joints, bones, np.asarray(surface))
 
-    def expandFrames(self, frames):
+    def expandFrames(self, frames, set_empty=False):
         """
         Expand the number of frames of the animation by coping the rotation and translation of frame zero several times.
 
         frames: desired amount of frames
         """
-        for joint in self.getlistofjoints():
-           joint.translation = np.asarray([joint.translation[0] for _ in range(frames)])
-           joint.rotation = np.asarray([joint.rotation[0] for _ in range(frames)])
-           #joint.position = np.asarray([joint.position[0] for _ in range(frames)])
-           #joint.orientation = np.asarray([joint.orientation[0] for _ in range(frames)])
-#           if len(joint.endsite) > 0:
-#                joint.endsiteposition = np.asarray([joint.endsiteposition[0] for _ in range(frames)])
-#            rot = joint.rotation[0]
-#            trans = joint.translation[0]
-#            joint.translation = np.empty([frames,3])
-#            joint.rotation = np.empty([frames,3])
-#            joint.translation[0,:] = trans[:]
-#            joint.rotation[0,:] = rot[:]
+        self.frames = frames
+        if set_empty:
+            for joint in self.getlistofjoints():
+                joint.translation = np.empty(shape=(frames, 3))
+                joint.rotation = np.empty(shape=(frames, 3))
+        else:
+            for joint in self.getlistofjoints():
+                joint.translation = np.asarray([joint.translation[0] for _ in range(frames)])
+                joint.rotation = np.asarray([joint.rotation[0] for _ in range(frames)])
+
+
 
     def downSample(self, target_fps):
         current_fps = np.round(1/self.frametime)
@@ -1003,7 +991,7 @@ def GetBVHDataFromFile(path, skipmotion=False):
                 elif (line.find("OFFSET") >= 0) and (not flagEndSite):
                     lastJoint.addOffset(np.asarray(line[line.find("OFFSET")+7:-1].split(' '),float))
                 elif (line.find("OFFSET") >= 0) and (flagEndSite):
-                    lastJoint.addEndSite(line[line.find("OFFSET")+7:-1])
+                    lastJoint.addEndSite(np.asarray(line[line.find("OFFSET")+7:-1].split(' '),float))
                     flagEndSite = False
 
                 elif (line.find("CHANNELS")) >= 0:
@@ -1046,7 +1034,8 @@ def GetBVHDataFromFile(path, skipmotion=False):
     if not skipmotion:
         for joint in bvhfile.getlistofjoints():
             if joint.order == "ZXY":
-                joint.rotation = joint.rotation[:, [2, 0, 1]]
+                # joint.rotation = joint.rotation[:, [2, 0, 1]]
+                joint.rotation = joint.rotation[:, [1, 2, 0]]
 
     return bvhfile
 

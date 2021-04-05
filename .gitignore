@@ -5,3 +5,7 @@ data/output
 dev/.ipynb_checkpoints
 dev/*.ipynb
 dev/*.npy
+dev/*.txt
+dev/*.csv
+dev/*_ML.py
+dev/*.log
