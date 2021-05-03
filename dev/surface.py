@@ -17,7 +17,7 @@ import mathutils
 
 
 class Surface:
-    
+
     def __init__(self, name, highpolymesh=True):
         self.name = name
         self.points = []
@@ -63,14 +63,14 @@ class Surface:
         """
         Re-scale the avatar surface data to match the joint scale. It uses
         the global Y position of the hips to re-scale.
-        
-        hipsjoint: Class Joint object of the avatar hip (or the base of 
+
+        hipsjoint: Class Joint object of the avatar hip (or the base of
         the spine)
         """
         try:
             hipsBasePosition = self.avatarHipsbaseposition
         except:
-            print('avatarHipsbaseposition not found. It should be the last line of the avatar surface file')    
+            print('avatarHipsbaseposition not found. It should be the last line of the avatar surface file')
         hipsposition = hipsjoint.getPosition(0)
         ratio = hipsposition[1]/hipsBasePosition[1]
         #Pode ser que o BVH esteja na origem mas o fbx utilizado não. Por exemplo, junta Hips no bvh = [0,100,0]
@@ -107,7 +107,7 @@ class Surface:
                 else:
                     if point.pointtype == 'mesh':
                         bodypoints.append(point)
-            
+
             if highpoly:
                 #21 Triangles
                 self.headmesh = []
@@ -152,7 +152,7 @@ class Surface:
                 ]
             for tri in range(len(comb)):
                 self.headmesh.append([headpoints[comb[tri][0]],headpoints[comb[tri][1]],headpoints[comb[tri][2]]])
-            
+
             if highpoly:
                 #15 Triangles
                 self.bodymesh = []
@@ -186,14 +186,14 @@ class Surface:
                         [2,7,4],
                         [3,5,8],
                 ]
-            
+
             #Total 36 Mesh Triangles
             for tri in range(len(comb)):
                 self.bodymesh.append([bodypoints[comb[tri][0]],bodypoints[comb[tri][1]],bodypoints[comb[tri][2]]])
-        
+
             return self.headmesh, self.bodymesh
-        
-        
+
+
 class SurfacePoint:
     def __init__(self, pointname, pointtype, jointlock):
         self.name = pointname
@@ -202,10 +202,10 @@ class SurfacePoint:
         self.position = []
         self.baseposition = []
         self.calibrationLocalTransform = []
-        
+
     def getPosition(self, animation, frame=0):
         """
-        Estima a posição da superfície baseado na transformada local calculada em 
+        Estima a posição da superfície baseado na transformada local calculada em
         GetAvatarSurfaceLocalTransform()
         """
         if self.pointtype=='mesh':
@@ -213,13 +213,13 @@ class SurfacePoint:
             assert joint, str.format('Could not find attached joint in animation: %s' % self.jointlock)
             globalPointTransform = np.dot(joint.getGlobalTransform(frame), self.calibrationLocalTransform)
             return np.dot(globalPointTransform,[0,0,0,1])[:-1]
-    
 
-                    
+
+
 def isNumber(s):
     """
     Return True if the string is a number
-    
+
     :type s: string
     :param s: String to be tested as a number
     """
@@ -232,7 +232,7 @@ def isNumber(s):
 def checkName(name):
     """
     Return True if the file in the path/name provided exists inside current path
-    
+
     :type name: string
     :param name: Local path/name of the back file
     """
@@ -243,8 +243,8 @@ def checkName(name):
 
 def FindHandsZeroSpeedGaps(animation, threshold=None, plot=False, minrangewide = 20, minpeakwide=40):
     """
-    Get the animation and  find the 
-    
+    Get the animation and  find the
+
     """
     rightHand = animation.getskeletonmap().rhandmiddle
     leftHand = animation.getskeletonmap().lhandmiddle
@@ -264,7 +264,7 @@ def FindHandsZeroSpeedGaps(animation, threshold=None, plot=False, minrangewide =
         deltaYsquare = np.square(leftHandPos[1,frameCount+1]-leftHandPos[1,frameCount])
         deltaZsquare = np.square(leftHandPos[2,frameCount+1]-leftHandPos[2,frameCount])
         leftHandVel[frameCount] = np.sqrt(deltaXsquare + deltaYsquare + deltaZsquare)
-    
+
     #Calculate mean velocity
     rhVelmean = np.mean(rightHandVel[:])
     lhVelmean = np.mean(leftHandVel[:])
@@ -279,11 +279,11 @@ def FindHandsZeroSpeedGaps(animation, threshold=None, plot=False, minrangewide =
     rhwhere = np.asarray(np.where(rightHandVel<rhVelmean)[0])
     #where the velocity is lower than its mean for the lef hand
     lhwhere = np.asarray(np.where(leftHandVel<lhVelmean)[0])
-    
+
     #Locate the gaps in velocity and assume it is a calibration position
     rhSteadyFrames, lhSteadyFrames = [], []
     rhaux, lhaux = 0,0
-    
+
     for i in range(rhwhere.shape[0]-1):
         #The minpeakwide prevents the detection of narrow peaks
         #if there is a gap in index, i.e., a peak:
@@ -307,12 +307,12 @@ def FindHandsZeroSpeedGaps(animation, threshold=None, plot=False, minrangewide =
                 lhaux = lhwhere[i+1]
         if i==lhwhere.shape[0]-2:
             lhSteadyFrames.append([lhaux, lhwhere[i]])
-            
+
     rightHandPositions = np.zeros((len(rhSteadyFrames),3))
     rightHandFrameRange = []
     leftHandPositions = np.zeros((len(lhSteadyFrames),3))
     leftHandFrameRange = []
-    
+
     if plot:
         print('Right Hand:')
         fig = plt.figure(figsize=(12,6))
@@ -336,8 +336,8 @@ def FindHandsZeroSpeedGaps(animation, threshold=None, plot=False, minrangewide =
             ax.plot([center-window, center-window],[0,1], color='red')
             ax.plot([center+window, center+window],[0,1], color='red')
             ax.text(center,1.05,str(i), horizontalalignment='center')
-            
-        
+
+
     if plot:
         ax.legend()
         #plt.show(fig)
@@ -364,7 +364,7 @@ def FindHandsZeroSpeedGaps(animation, threshold=None, plot=False, minrangewide =
         ax.set_title('Zero-Speed Left-Hand Frame Ranges', fontsize=16)
         ax.set_xlabel('Frame', fontsize=14)
         ax.set_ylabel('Speed (units/frame)', fontsize=14)
-        
+
     for i in range(leftHandPositions.shape[0]):
         window = int(((lhSteadyFrames[i][1] - lhSteadyFrames[i][0])/2)*0.5)
         center = int((lhSteadyFrames[i][1] + lhSteadyFrames[i][0])/2)
@@ -376,8 +376,8 @@ def FindHandsZeroSpeedGaps(animation, threshold=None, plot=False, minrangewide =
             ax.plot([center-window, center-window],[0,1], color='red')
             ax.plot([center+window, center+window],[0,1], color='red')
             ax.text(center,1.05,str(i), horizontalalignment='center')
-            
-    
+
+
     if plot:
         ax.legend()
         #plt.show(fig)
@@ -396,32 +396,32 @@ def FindHandsZeroSpeedGaps(animation, threshold=None, plot=False, minrangewide =
 def GetCalibrationFromBVHS(frontAnimName, headAnimName, backAnimName, savefile=True, debugmode = False, minrangewide = 20, minpeakwide=40, handthreshold = 0.5):
     """
     Opens the calibration animations (bvh files) and get the calibration positions of the points.
-    
+
     If savefile = True, saves a .txt file containing the calibration local transform of each point
-    
+
     :type frontAnimName: string
     :param frontAnimName: Local path/name of the front calibration animation
-    
+
     :type headAnimName: string
     :param headAnimName: Local path/name of the head calibration animation
-    
+
     :type backAnimName: string
     :param backAnimName: Local path/name of the back calibration animation
     """
-    
+
     def getLocalTransform(animation, jointlock, frame, pointpos, handthick = 3.5):
         """
         Return the local transform of the surface point in respect to its parent joint jointlock
-        
+
         :type animation: bvhsdk.Animation
         :param animation: Calibration animation
-        
+
         :type jointlock: bvhsdk.Joint
         :param jointlock: Joint to be used as parent of the surface point
-        
+
         :type frame: int
         :param frame: The frame number of the pose to evaluate
-        
+
         :type pointpos: numpy.ndarray
         :param pointpos: Position of the surface point
         """
@@ -439,24 +439,24 @@ def GetCalibrationFromBVHS(frontAnimName, headAnimName, backAnimName, savefile=T
         globalTransform = mathutils.matrixTranslation(position[0], position[1], position[2])
         localTransform = np.dot(jointInverse, globalTransform)
         return localTransform
-    
+
     def getRadius(animation, jointlock, frame, pointpos, handthick = 3.5):
         """
         Return the Radius of the limb, the distance between the surface point, p0,
         and the bone (vector from the jointlock, p1, to the jointlock's child, p2)
-        
+
         Distance between point p0 and line passing through p1 and p2:
         d = |(p0 - p1) x (p0 - p2)|/|p2-p1| = |(p0p1) x (p0p2)|/|p2p1|
-        
+
         :type animation: bvhsdk.Animation
         :param animation: Calibration animation
-        
+
         :type jointlock: bvhsdk.Joint
         :param jointlock: Joint to be used as parent of the surface point
-        
+
         :type frame: int
         :param frame: The frame number of the pose to evaluate
-        
+
         :type pointpos: numpy.ndarray
         :param pointpos: Position of the surface point
         """
@@ -471,11 +471,11 @@ def GetCalibrationFromBVHS(frontAnimName, headAnimName, backAnimName, savefile=T
         if handthick:
             d = d-3.5
         return d
-        
-    if debugmode: 
+
+    if debugmode:
         np.set_printoptions(precision=3, suppress=True)
-        log = []    
-    
+        log = []
+
     realpath = os.path.dirname(os.path.realpath(__file__))
 #    arq = os.path.join(realpath, 'Superficie\Frente_2_mcp.bvh')
     arq = os.path.join(realpath, frontAnimName)
@@ -489,13 +489,13 @@ def GetCalibrationFromBVHS(frontAnimName, headAnimName, backAnimName, savefile=T
         threshold = threshold - 0.1
     localTransforms = []
     radius = []
-    
+
     skipleft = 0
     skipright = 0
-    
-    
+
+
     #Starting at TPose, ignore index 0
-    if debugmode: 
+    if debugmode:
         log.append('First BVH File')
         log.append('Right Hand Position in Gaps:')
         log = log + list(right)
@@ -510,7 +510,7 @@ def GetCalibrationFromBVHS(frontAnimName, headAnimName, backAnimName, savefile=T
         log.append('Left Hand Gaps Range:')
         log = log + list(np.asarray(leftrange)[:,1])
         log.append('Starting analysis')
-    
+
     #Check if performer lowered his arm after the TPose (Rest Pose)
     if max(right[1,:]) < max(animation.root.getPosition(frame=0)) or max(left[1,:]) < max(animation.root.getPosition(frame=0)):
         right = np.delete(right, 1, 0)
@@ -518,7 +518,7 @@ def GetCalibrationFromBVHS(frontAnimName, headAnimName, backAnimName, savefile=T
         rightrange = np.delete(rightrange, 1, 0)
         leftrange = np.delete(leftrange, 1, 0)
         if debugmode: log.append('Rest Pose after TPose detected. Index 1 deleted.')
-    
+
     #Chest Right
     localTransforms.append(getLocalTransform(animation, animation.getskeletonmap().spine3, rightrange[1][0], right[1,:]))
     if debugmode: log.append('Chest Right Position: %s. Frame: %f.'% (right[1,:], rightrange[1][0]))
@@ -526,7 +526,7 @@ def GetCalibrationFromBVHS(frontAnimName, headAnimName, backAnimName, savefile=T
     localTransforms.append(getLocalTransform(animation, animation.getskeletonmap().spine3, leftrange[1][0], left[1,:]))
     if debugmode: log.append('Chest Left Position: %s. Frame: %f'% (left[1,:], leftrange[1][0]))
     #Abdomen Right
-    localTransforms.append(getLocalTransform(animation, animation.getskeletonmap().spine, rightrange[2][0], right[2,:])) 
+    localTransforms.append(getLocalTransform(animation, animation.getskeletonmap().spine, rightrange[2][0], right[2,:]))
     if debugmode: log.append('Abdomen Right Position: %s. Frame: %f'% (right[2,:], rightrange[2][0]))
     #Abdomen Left
     localTransforms.append(getLocalTransform(animation, animation.getskeletonmap().spine, leftrange[2][0], left[2,:]))
@@ -549,7 +549,7 @@ def GetCalibrationFromBVHS(frontAnimName, headAnimName, backAnimName, savefile=T
     #Shin Left
     radius.append(getRadius(animation, animation.getskeletonmap().llowleg, leftrange[5][0], left[5,:]))
     if debugmode: log.append('Shin Left Position: %s. Frame: %f'% (left[5,:], leftrange[5][0]))
-    
+
     #Rest Pose
     if max(right[6,:]) < max(animation.root.getPosition(frame=0)) or max(left[6,:]) < max(animation.root.getPosition(frame=0)):
         skipright = skipright + 1
@@ -566,13 +566,13 @@ def GetCalibrationFromBVHS(frontAnimName, headAnimName, backAnimName, savefile=T
         localTransforms.append(getLocalTransform(animation, animation.getskeletonmap().spine2, leftrange[6+skipleft][0], left[6+skipleft,:]))
         if debugmode: log.append('Abdomen Up Position: %s. Frame: %f. Index: %i. Left Hand used.'% (left[6+skipleft,:], leftrange[6+skipleft][0], 6+skipleft))
         skipleft = skipleft + 1
-    
+
     #Rest Pose
 
-    #Arms Up    
+    #Arms Up
     skipright = skipright + 1
     skipleft = skipleft + 1
-    
+
     if rightrange[7+skipright][1] > leftrange[7+skipleft][1]:
 #    #Check which hand was calibrated first, i.e., if the right hand has a bigger gap, it was steady
 #    #being calibrated (while the left hand was moving to touch the surface of the right arm)
@@ -584,7 +584,7 @@ def GetCalibrationFromBVHS(frontAnimName, headAnimName, backAnimName, savefile=T
 #        #First Right Hand used to calibrate Left Arm
         if debugmode: log.append('Calibrating Left Arm first. Using Right Hand')
         skipleft = skipleft + 1
-        
+
     #Arm Right (calibrated using left hand)
     radius.append(getRadius(animation, animation.getskeletonmap().rarm, leftrange[7+skipleft][0], left[7+skipleft,:]))
     if debugmode: log.append('Arm Right Position: %s. Frame: %f. Index: %i'% (left[7+skipleft,:], leftrange[7+skipleft][0], 7+skipleft))
@@ -598,7 +598,7 @@ def GetCalibrationFromBVHS(frontAnimName, headAnimName, backAnimName, savefile=T
     radius.append(getRadius(animation, animation.getskeletonmap().lforearm, rightrange[8+skipright][0], right[8+skipright,:]))
     if debugmode: log.append('ForeArm Left Position: %s. Frame: %f. Index: %i'% (right[8+skipright,:], rightrange[8+skipright][0], 8+skipright))
 
-    
+
     print('First file done')
     arq = os.path.join(realpath, headAnimName)
     print('Reading second BVH file')
@@ -610,12 +610,12 @@ def GetCalibrationFromBVHS(frontAnimName, headAnimName, backAnimName, savefile=T
     while len(right) < 11 and len(left) < 11:
         right, left, rightrange, leftrange = FindHandsZeroSpeedGaps(animation, threshold, plot = debugmode, minrangewide = minrangewide, minpeakwide=minpeakwide)
         threshold = threshold - 0.1
-    
+
     skipleft = 0
     skipright = 0
-    
+
     #Starting at TPose, ignore index 0
-    if debugmode: 
+    if debugmode:
         log.append('\n\n')
         log.append('Second BVH File')
         log.append('Right Hand Position in Gaps:')
@@ -631,7 +631,7 @@ def GetCalibrationFromBVHS(frontAnimName, headAnimName, backAnimName, savefile=T
         log.append('Left Hand Gaps Range:')
         log = log + list(np.asarray(leftrange)[:,1])
         log.append('Starting analysis')
-    
+
     #Check if performer lowered his arm after the TPose
     if max(right[1,:]) < max(animation.root.getPosition(frame=0)) or max(left[1,:]) < max(animation.root.getPosition(frame=0)):
         right = np.delete(right, 1, 0)
@@ -639,18 +639,18 @@ def GetCalibrationFromBVHS(frontAnimName, headAnimName, backAnimName, savefile=T
         rightrange = np.delete(rightrange, 1, 0)
         leftrange = np.delete(leftrange, 1, 0)
         if debugmode: log.append('Rest Pose after TPose detected. Index 1 deleted.')
-    
+
     #Head Right
     localTransforms.append(getLocalTransform(animation, animation.getskeletonmap().head, rightrange[1][0], right[1,:]))
     if debugmode: log.append('Head Right Position: %s. Frame: %f.'% (right[1,:], rightrange[1][0]))
     #Head Left
-    localTransforms.append(getLocalTransform(animation, animation.getskeletonmap().head, leftrange[1][0], left[1,:]))    
+    localTransforms.append(getLocalTransform(animation, animation.getskeletonmap().head, leftrange[1][0], left[1,:]))
     if debugmode: log.append('Head Left Position: %s. Frame: %f'% (left[1,:], leftrange[1][0]))
     #Ear Right
     localTransforms.append(getLocalTransform(animation, animation.getskeletonmap().head, rightrange[2][0], right[2,:]))
     if debugmode: log.append('Ear Right Position: %s. Frame: %f.'% (right[2,:], rightrange[2][0]))
     #Ear Left
-    localTransforms.append(getLocalTransform(animation, animation.getskeletonmap().head, leftrange[2][0], left[2,:]))   
+    localTransforms.append(getLocalTransform(animation, animation.getskeletonmap().head, leftrange[2][0], left[2,:]))
     if debugmode: log.append('Ear Left Position: %s. Frame: %f'% (left[2,:], leftrange[2][0]))
     #Chin Right
     localTransforms.append(getLocalTransform(animation, animation.getskeletonmap().head, rightrange[3][0], right[3,:]))
@@ -678,11 +678,11 @@ def GetCalibrationFromBVHS(frontAnimName, headAnimName, backAnimName, savefile=T
         #Forehead
         localTransforms.append(getLocalTransform(animation, animation.getskeletonmap().head, rightrange[5+skipright][0], right[5+skipright,:]))
         if debugmode: log.append('Forehead Position: %s. Frame: %f. Index: %i'% (right[5+skipright,:], rightrange[5+skipright][0], 5+skipright))
-        
+
         if max(right[5+skipright+1,:]) < max(animation.root.getPosition(frame=0)):
             #Back to rest pose
             skipright = skipright + 1
-        
+
     else:
         #Left Hand used
         if debugmode: log.append('Left Hand used to calibrate Mouth and Forehead')
@@ -696,7 +696,7 @@ def GetCalibrationFromBVHS(frontAnimName, headAnimName, backAnimName, savefile=T
         if max(left[5+skipleft+1,:]) < max(animation.root.getPosition(frame=0)):
             #Back to rest pose
             skipleft = skipleft + 1
-            
+
     #skipleft += 1
     #Back Head Right
     localTransforms.append(getLocalTransform(animation, animation.getskeletonmap().head, rightrange[6+skipright][0], right[6+skipright,:]))
@@ -727,10 +727,10 @@ def GetCalibrationFromBVHS(frontAnimName, headAnimName, backAnimName, savefile=T
     while len(right) < 4 and len(left) < 4:
         right, left, rightrange, leftrange = FindHandsZeroSpeedGaps(animation, threshold, plot=debugmode, minrangewide = minrangewide, minpeakwide=minpeakwide)
         threshold = threshold - 0.1
-    
-    
+
+
     #Starting at TPose, ignore index 0
-    if debugmode: 
+    if debugmode:
         log.append('\n\n')
         log.append('Third BVH File')
         log.append('Right Hand Position in Gaps:')
@@ -746,7 +746,7 @@ def GetCalibrationFromBVHS(frontAnimName, headAnimName, backAnimName, savefile=T
         log.append('Left Hand Gaps Range:')
         log = log + list(np.asarray(leftrange)[:,1])
         log.append('Starting analysis')
-    
+
     #Check if performer lowered his arm after the TPose
     if max(right[1,:]) < max(animation.root.getPosition(frame=0)) or max(left[1,:]) < max(animation.root.getPosition(frame=0)):
         right = np.delete(right, 1, 0)
@@ -754,12 +754,12 @@ def GetCalibrationFromBVHS(frontAnimName, headAnimName, backAnimName, savefile=T
         rightrange = np.delete(rightrange, 1, 0)
         leftrange = np.delete(leftrange, 1, 0)
         if debugmode: log.append('Rest Pose after TPose detected. Index 1 deleted.')
-    
+
     #Loin Right
     localTransforms.append(getLocalTransform(animation, animation.getskeletonmap().hips, rightrange[1][0], right[1,:]))
     if debugmode: log.append('Loin Right Position: %s. Frame: %f.'% (right[1,:], rightrange[1][0]))
     #Loin Left
-    localTransforms.append(getLocalTransform(animation, animation.getskeletonmap().hips, leftrange[1][0], left[1,:])) 
+    localTransforms.append(getLocalTransform(animation, animation.getskeletonmap().hips, leftrange[1][0], left[1,:]))
     if debugmode: log.append('Loin Right Position: %s. Frame: %f.'% (left[1,:], leftrange[1][0]))
     #Loin Up
     ground = np.asarray([0,1,0])
@@ -769,7 +769,7 @@ def GetCalibrationFromBVHS(frontAnimName, headAnimName, backAnimName, savefile=T
         localTransforms.append(getLocalTransform(animation, animation.getskeletonmap().spine1, rightrange[2][0], right[2,:]))
         if debugmode: log.append('Loin Up Position: %s. Frame: %f.'% (right[2,:], rightrange[2][0]))
     else:
-        localTransforms.append(getLocalTransform(animation, animation.getskeletonmap().spine1, leftrange[2][0], left[2,:]))     
+        localTransforms.append(getLocalTransform(animation, animation.getskeletonmap().spine1, leftrange[2][0], left[2,:]))
         if debugmode: log.append('Loin Up Position: %s. Frame: %f.'% (left[2,:], leftrange[2][0]))
 
 #    print('Costas: ')
@@ -777,9 +777,9 @@ def GetCalibrationFromBVHS(frontAnimName, headAnimName, backAnimName, savefile=T
 #    print(left)
 
     ###########################################################################
-    
+
     #TODO: Uso a transformada local de um frame apenas
-        
+
     ###########################################################################
     if savefile:
         filename = 'surface.txt'
@@ -794,7 +794,7 @@ def GetCalibrationFromBVHS(frontAnimName, headAnimName, backAnimName, savefile=T
                     print("%f\n%f\n%f\n%f" % (radius[0], radius[1], radius[2], radius[3]), file=text_file)
                 elif i == 6:
                     print("%f\n%f\n%f\n%f" % (radius[4], radius[5], radius[6], radius[7]), file=text_file)
-
+        print('Surface calibration file %s saved' % (os.path.join(realpath, filename)))
     if debugmode:
         filename = 'log_surface.txt'
         i = 0
@@ -839,7 +839,7 @@ def GetAvatarSurfaceFromCSV(path, highpolymesh = True):
         with open(path, "r") as file:
             data = [np.asarray(line.replace('\n', '').split(','), dtype='float') if len(line.split(','))>1 else float(line.replace('\n', '')) for line in file]
     except FileNotFoundError as e:
-        print('Invalid path provided or surface file not found in %s.\nError: %s.' % (path,str(e)))    
+        print('Invalid path provided or surface file not found in %s.\nError: %s.' % (path,str(e)))
         return None
     avatarSurface = Surface('Avatar', highpolymesh=highpolymesh)
     for point,i in zip(avatarSurface.points, range(len(avatarSurface.points))):
@@ -849,7 +849,7 @@ def GetAvatarSurfaceFromCSV(path, highpolymesh = True):
             point.baseposition = np.asarray(data[i],dtype='float')
     avatarSurface.avatarHipsbaseposition = np.asarray(data[i+1],dtype='float')
     return avatarSurface
-    
+
 
 def GetAvatarSurfaceLocalTransform(avatar, avatarSurface):
     """
@@ -869,7 +869,7 @@ def GetAvatarSurfaceLocalTransform(avatar, avatarSurface):
 
 def AvatarSurfacePositionEstimation(avatar, avatarSurface):
     """
-    Estima a posição da superfície baseado na transformada local calculada em 
+    Estima a posição da superfície baseado na transformada local calculada em
     GetAvatarSurfaceLocalTransform()
     """
     for point in avatarSurface.points:
@@ -883,12 +883,12 @@ def AvatarSurfacePositionEstimation(avatar, avatarSurface):
                     globalPointTransform = np.dot(joint.getGlobalTransform(frame=frame), point.calibrationLocalTransform)
                     point.position.append(np.dot(globalPointTransform,[0,0,0,1]))
 
-  
-    
-  
-    
-    
-    
+
+
+
+
+
+
 #SurfacePoints('chestRight', 'mesh', 'Spine3')
 #SurfacePoints('chestLeft', 'mesh', 'Spine3')
 #SurfacePoints('abdomenRight', 'mesh', 'Spine')
@@ -920,4 +920,3 @@ def AvatarSurfacePositionEstimation(avatar, avatarSurface):
 #SurfacePoints('loinRight', 'mesh', 'Hips')
 #SurfacePoints('loinLeft', 'mesh', 'Hips')
 #SurfacePoints('loinUp', 'mesh', 'Spine1')
-

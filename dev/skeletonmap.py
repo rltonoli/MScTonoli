@@ -6,7 +6,7 @@ Created on Mon Sep 24 23:49:43 2018
 """
 import os
 
-#Standard names
+# Standard names
 std_root = ['root', 'Hips']
 std_hips = ['spine05','Hips']
 std_spine = ['spine04', 'Spine']
@@ -40,8 +40,10 @@ std_lFoot = ['foot.L','LeftForeFoot']
 std_lForeFoot = []
 std_lToeBase = ['toe3-1.L','LeftToeBase']
 
-std_alljoints = std_root + std_hips + std_spine + std_spine1 + std_spine2 + std_spine3 + std_neck + std_neck1 +std_head  +std_rShoulder +std_rArm +std_rForeArm  +std_rHand +std_rHandThumb1  +std_rHandMiddle1 +std_lShoulder +std_lArm +std_lForeArm  +std_lHand +std_lHandThumb1 +std_lHandMiddle1  +std_rUpLeg +std_rLeg +std_rFoot +std_rForeFoot +std_rToeBase +std_lUpLeg +std_lLeg+std_lFoot+std_lForeFoot+std_lToeBase
-std_validNames  = [std_root,std_hips,std_spine,std_spine1,std_spine2,std_spine3,std_neck,std_neck1,std_head ,std_rShoulder,std_rArm,std_rForeArm ,std_rHand,std_rHandThumb1 ,std_rHandMiddle1,std_lShoulder,std_lArm,std_lForeArm ,std_lHand,std_lHandThumb1,std_lHandMiddle1 ,std_rUpLeg,std_rLeg,std_rFoot,std_rForeFoot,std_rToeBase,std_lUpLeg,std_lLeg,std_lFoot,std_lForeFoot,std_lToeBase]
+std_alljoints = std_root + std_hips + std_spine + std_spine1 + std_spine2 + std_spine3 + std_neck + std_neck1 + std_head + std_rShoulder + std_rArm + std_rForeArm + std_rHand + std_rHandThumb1 + std_rHandMiddle1 + std_lShoulder + std_lArm + std_lForeArm + std_lHand + std_lHandThumb1 + std_lHandMiddle1 + std_rUpLeg + std_rLeg + std_rFoot + std_rForeFoot + std_rToeBase + std_lUpLeg + std_lLeg + std_lFoot + std_lForeFoot + std_lToeBase
+std_validNames = [std_root, std_hips, std_spine, std_spine1, std_spine2, std_spine3, std_neck, std_neck1, std_head, std_rShoulder, std_rArm, std_rForeArm, std_rHand, std_rHandThumb1, std_rHandMiddle1, std_lShoulder, std_lArm, std_lForeArm, std_lHand, std_lHandThumb1, std_lHandMiddle1, std_rUpLeg, std_rLeg, std_rFoot, std_rForeFoot, std_rToeBase, std_lUpLeg, std_lLeg, std_lFoot, std_lForeFoot, std_lToeBase]
+std_ViconNames = ["Root", "Hips", "Spine", "Spine1", "Spine2", "Spine3", "Neck", "Neck1", "Head", "RightShoulder", "RightArm", "RightForeArm", "RightHand", "LeftShoulder", "LeftArm", "LeftForeArm", "LeftHand", "RightUpLeg", "RightLeg", "RightFoot", "RightForeFoot", "RightToeBase", "LeftUpLeg", "LeftLeg", "LeftFoot", "LeftForeFoot", "LeftToeBase"]
+std_ViconJoints = [std_root, std_hips, std_spine, std_spine1, std_spine2, std_spine3, std_neck, std_neck1, std_head, std_rShoulder, std_rArm, std_rForeArm, std_rHand, std_lShoulder, std_lArm, std_lForeArm, std_lHand, std_rUpLeg, std_rLeg, std_rFoot, std_rForeFoot, std_rToeBase, std_lUpLeg, std_lLeg, std_lFoot, std_lForeFoot, std_lToeBase]
 
 
 class SkeletonMap:
@@ -50,6 +52,9 @@ class SkeletonMap:
         self.alljoints = []
         self.__getCompleteMapping(animation, mapfile)
         self.checkJoints()
+
+    #def __str__(self):
+
 
 
     def getJointsNoRoot(self):

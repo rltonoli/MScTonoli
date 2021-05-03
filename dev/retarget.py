@@ -110,19 +110,15 @@ def PostureInitialization(tgtMap, srcMap, heightRatio, frame, getpositions=False
                 joint_ava.setRotation(frame,tgtNewLclRotationEuler[:])
 
 
-
-
-
-
-
-def checkName(name):
+def checkName(name, currentpath=None):
     """
     Return True if the file in the path/name provided exists inside current path
 
     :type name: string
     :param name: Local path/name of the back file
     """
-    currentpath = os.path.dirname(os.path.realpath(__file__))
+    if not currentpath:
+        currentpath = os.path.dirname(os.path.realpath(__file__))
     fullpath = os.path.join(currentpath, name)
     return os.path.isfile(fullpath)
 
@@ -133,7 +129,7 @@ def MotionRetargeting(sourceAnimationPath, sourceSurfacePath, targetSkeletonPath
 
     # Surface Calibration #####################################################
     start = time.time()
-    srcSurface = surface.GetMoCapSurfaceFromTXT(sourceSurfacePath, highpolymesh = False)
+    srcSurface = surface.GetMoCapSurfaceFromTXT(sourceSurfacePath, highpolymesh=False)
     print('Surface from file done. %s seconds.' % (time.time()-start))
 
     #Read mocap bvh file #####################################################
@@ -260,11 +256,11 @@ def MotionRetargeting(sourceAnimationPath, sourceSurfacePath, targetSkeletonPath
     output_filename = source_filename[:-4] + '_retarget'
     of_aux = output_filename
     i = 0
-    while checkName(output_filename+'.bvh'):
+    while checkName(output_filename+'.bvh', currentpath):
         i = i + 1
         output_filename = of_aux + str(i)
 
-    bvhsdk.WriteBVH(tgtAnimation, currentpath, output_filename, refTPose = True)
+    bvhsdk.WriteBVH(tgtAnimation, currentpath, output_filename, refTPose=True)
 
     # if saveInitAndFull:
     #     output_filename = source_filename[:-4] + '_initialRetarget'
@@ -274,7 +270,30 @@ def MotionRetargeting(sourceAnimationPath, sourceSurfacePath, targetSkeletonPath
     #         i = i + 1
     #         output_filename = of_aux + str(i)
     #     bvhsdk.WriteBVH(tgtAnimation_onlyInitial, currentpath, output_filename,refTPose=True)
-    #return tgtAnimation, tgtSurface, srcAnimation, srcSurface, tgtAnimation_onlyInitial, egocoord
+    # return tgtAnimation, tgtSurface, srcAnimation, srcSurface, tgtAnimation_onlyInitial, egocoord
 
     print('Done! Total time: %s seconds.' % (time.time()-retargettime))
     return tgtAnimation, tgtSurface, srcAnimation, srcSurface, None, egocoord
+
+
+def SimpleMotionRetargeting(srcAnimationPath, tgtAnimationPath):
+    """
+    Perform a simple motion retargeting. The bones of the target skeleton is aligned with the bones of the source animation
+
+     Parameters
+    ----------
+    srcAnimationPath : string
+        Path to the source animation (.bvh)
+    tgtAnimationPath : string, optional
+        Path to the source animation (.bvh). The animation file may have one or several frames, but only the first take will be used.
+
+    Returns
+    -------
+    variable : numpy array
+        Description.
+    """
+    srcAnimation = bvhsdk.ReadFile(srcAnimationPath)
+    tgtAnimation = bvhsdk.ReadFile(tgtAnimationPath)
+    srcMap = srcAnimation.getskeletonmap()
+    tgtMap = tgtAnimation.getskeletonmap()
+    #PostureInitialization(tgtMap, srcMap, heightRatio, frame, getpositions = False, headAlign = True, spineAlign = False)
