@@ -11,40 +11,26 @@ import bvhsdk
 import surface
 import mathutils
 import time
-from copy import deepcopy
 import egocentriccoord
 import ik
-import plotanimation
 
 
-def PostureInitialization(tgtMap, srcMap, heightRatio, frame, getpositions=False, headAlign = True, spineAlign = False, handAlign = True):
+def PostureInitialization(tgtMap, srcMap, heightRatio, frame, getpositions=False, headAlign=True, spineAlign=False, handAlign=True):
     """
     Copy the rotation from the mocap joints to the corresponding avatar joint.
 
     ani_ava: Avatar animation
     ani_mocap: Mocap animation
     """
-    #start=time.time()
-    #Expand the number of frames of the avatar animation to match the mocap animation
-
-    #Adapt pose each frame
-    # print('Starting Posture Initialization')
-    # for frame in range(ani_mocap.frames):
-    #     if np.mod(frame+1,100) == 0:
-    #         print('%i frames done. %s seconds.' % (int((frame+1)/100)*100,time.time()-start))
-    #         start=time.time()
-
-
-
-    ground_normal = np.array([0,1,0])
-    #Adjust roots/hips height
-    #Eray Molla Eq 1
+    ground_normal = np.array([0, 1, 0])
+    # Adjust roots/hips height
+    # Eray Molla Eq 1
     srcPosHips = srcMap.hips.getPosition(frame)
     srcGroundHips = np.asarray([srcPosHips[0], 0, srcPosHips[2]])
     tgtGroundHips = srcGroundHips*heightRatio
     srcHHips = np.dot(srcMap.hips.getPosition(frame), ground_normal)
     tgtHHips = srcHHips*heightRatio
-    tgtMap.root.translation[frame] = [0,tgtHHips,0] + tgtGroundHips
+    tgtMap.root.translation[frame] = [0, tgtHHips, 0] + tgtGroundHips
 
     if frame == 0:
         mocapbones = []
@@ -123,8 +109,7 @@ def checkName(name, currentpath=None):
     return os.path.isfile(fullpath)
 
 
-
-def MotionRetargeting(sourceAnimationPath, sourceSurfacePath, targetSkeletonPath, targetSurfacePath, customSkeletomMap = None, computeEgo = True, computeIK = True, adjustOrientation = True, saveFile = True, saveInitAndFull = True, out_path=None):
+def MotionRetargeting(sourceAnimationPath, sourceSurfacePath, targetSkeletonPath, targetSurfacePath, customSkeletomMap=None, computeEgo=True, computeIK=True, adjustOrientation=True, saveFile=True, saveInitAndFull=True, out_path=None):
     retargettime = time.time()
 
     # Surface Calibration #####################################################
@@ -132,127 +117,86 @@ def MotionRetargeting(sourceAnimationPath, sourceSurfacePath, targetSkeletonPath
     srcSurface = surface.GetMoCapSurfaceFromTXT(sourceSurfacePath, highpolymesh=False)
     print('Surface from file done. %s seconds.' % (time.time()-start))
 
-    #Read mocap bvh file #####################################################
+    # Read mocap bvh file #####################################################
     source_filename = os.path.basename(sourceAnimationPath)
     start = time.time()
-    #TODO: Eu mandava a superfície para calcular a posição, mas não estou mais fazendo isso
-    #pq eu implementei o pointsurface.getposition. Remover e testar se alguém ainda usa isso
+    # TODO: I think that ReadFile does not need surfaceinfo anymore. Test it and remove it.
     srcAnimation = bvhsdk.ReadFile(sourceAnimationPath, surfaceinfo=srcSurface)
     srcMap = srcAnimation.getskeletonmap()
     print('MoCap BVH read done. %s seconds.' % (time.time()-start))
 
-
-    #Read TPose bvh file #####################################################
+    # Read TPose bvh file #####################################################
     start = time.time()
     tgtAnimation = bvhsdk.ReadFile(targetSkeletonPath)
-    #Get skeleton map
-    #TODO: Acho que não é necessário pegar o mapa aqui, remover e testar
-    tgtMap = tgtAnimation.getskeletonmap(mapfile = customSkeletomMap)
-    #Get the avatar surface data
-    tgtSurface = surface.GetAvatarSurfaceFromCSV(targetSurfacePath, highpolymesh = False)
-    #Scale the avatar surface data accordingly to the TPose bvh data
-    tgtSurface.NormalizeSurfaceData(hipsjoint = tgtMap.hips)
+    # Get skeleton map
+    # TODO: Acho que não é necessário pegar o mapa aqui, remover e testar
+    tgtMap = tgtAnimation.getskeletonmap(mapfile=customSkeletomMap)
+    # Get the avatar surface data
+    tgtSurface = surface.GetAvatarSurfaceFromCSV(targetSurfacePath, highpolymesh=False)
+    # Scale the avatar surface data accordingly to the TPose bvh data
+    tgtSurface.NormalizeSurfaceData(hipsjoint=tgtMap.hips)
     surface.GetAvatarSurfaceLocalTransform(tgtAnimation, tgtSurface)
     print('Avatar BVH read done. %s seconds.' % (time.time()-start))
-
 
     # Initialize pose #########################################################
     tgtAnimation.frames = srcAnimation.frames
     tgtAnimation.frametime = srcAnimation.frametime
-    #Save the reference TPose
+    # Save the reference TPose
     for joint in tgtAnimation.root:
         joint.tposerot = joint.rotation[0]
         joint.tposetrans = joint.translation[0]
     tgtAnimation.expandFrames(srcMap.root.translation.shape[0])
 
-    #Get the Height of the root in the base position (Frame = 0)
-    #If the source animation (mocap) is not in the TPose, it will fail
-    ground_normal = np.array([0,1,0])
+    # Get the Height of the root in the base position (Frame = 0)
+    # If the source animation (mocap) is not in the TPose, it will fail
+    ground_normal = np.array([0, 1, 0])
     srcHHips = np.dot(srcMap.hips.getPosition(0), ground_normal)
     tgtHHips = np.dot(tgtMap.hips.getPosition(0), ground_normal)
     heightRatio = tgtHHips/srcHHips
 
-    JacRHand = ik.SimpleJacobian(tgtAnimation, tgtAnimation.getskeletonmap().rhand, depth = 5)
-    JacLHand = ik.SimpleJacobian(tgtAnimation, tgtAnimation.getskeletonmap().lhand, depth = 5)
+    JacRHand = ik.SimpleJacobian(tgtAnimation, tgtAnimation.getskeletonmap().rhand, depth=5)
+    JacLHand = ik.SimpleJacobian(tgtAnimation, tgtAnimation.getskeletonmap().lhand, depth=5)
 
     iklogRHand = []
     iklogLHand = []
 
-    start=time.time()
     print('Starting Motion Retargeting')
     start = time.time()
     for frame in range(srcAnimation.frames):
 
-        PostureInitialization(tgtMap, srcMap, heightRatio, frame, getpositions = False, headAlign = True, spineAlign = False)
-
-        #TODO: DEBUG
-        # print('PI: %.4f seconds.' % (time.time()-start))
-
-
-        #TODO: VERIFICAR SE AINDA PRECISO DISSO
-        #print('Starting avatar surface position estimation')
-        #surface.AvatarSurfacePositionEstimation(tgtAnimation, tgtSurface)
-        #print('Done. %s seconds.' % (time.time()-start))
-
-        # if not computeEgo:
-        #     return tgtAnimation, tgtSurface, srcAnimation, srcSurface, None, None
-        # else:
-        #tgtAnimation_onlyInitial = deepcopy(tgtAnimation)
+        # Perform Simple Retargeting ##################################################
+        PostureInitialization(tgtMap, srcMap, heightRatio, frame, getpositions=False, headAlign=True, spineAlign=False)
 
         # Calculate egocentric coordinates ############################################
-        #start = time.time()
         egocoord = egocentriccoord.GetEgocentricCoordinatesTargets(srcAnimation, srcSurface, tgtAnimation, tgtSurface, frame)
 
+        # TODO: I can't remember why I'm doing this. Probably to get some info for my thesis. Remove it later
         MotionRetargeting.importance.append(egocoord[0].importance)
 
-        #TODO: DEBUG
-        # print('EC: %.4f seconds.' % (time.time()-start))
-
-
-        # Aplica Cinemática Inversa ###################################################
-        #start = time.time()
-        targetRHand = egocoord[0].getTarget(frame)
-        targetLHand = egocoord[1].getTarget(frame)
-        logR = JacRHand.jacobianTranspose(frame=frame, target=targetRHand)
-        logL = JacLHand.jacobianTranspose(frame=frame, target=targetLHand)
+        # Applies Inverse Kinematics ###################################################
+        logR = JacRHand.jacobianTranspose(frame=frame, target=egocoord[0].getTarget(frame))
+        logL = JacLHand.jacobianTranspose(frame=frame, target=egocoord[1].getTarget(frame))
         iklogRHand.append(logR)
         iklogLHand.append(logL)
 
-        #TODO: DEBUG
-        # print('IK: %.4f seconds.' % (time.time()-start))
+        # Adjust Limb Extremities ##################################################
+        egocentriccoord.AdjustExtremityOrientation(tgtAnimation, tgtSurface, egocoord, srcAnimation, frame)
+        # I was working on some different adjustment but it did not work. Remove it later:
+        # egocentriccoord.AdjustExtremityOrientation2(tgtAnimation, srcAnimation)
 
-
-        # targetRHand = [0,0,0]
-        # targetLHand = [0,0,0]
-        # if np.mod(frame+1,100) == 0:
-        #     print('%i frames done. %s seconds.' % (int((frame+1)/100)*100,time.time()-start))
-        #     start=time.tim'e()
-
-        # # Adjust Limb Extremities ##################################################
-        #start = time.time()
-        egocentriccoord.AdjustExtremityOrientation(tgtAnimation, tgtSurface, egocoord, srcAnimation,frame)
-
-        #TODO: DEBUG
-        #print('LE: %.4f seconds.' % (time.time()-start))
-
-
-        #egocentriccoord.AdjustExtremityOrientation2(tgtAnimation, srcAnimation)
-
-        if np.mod(frame+1,100) == 0:
-            print('%i frames done. %s seconds.' % (int((frame+1)/100)*100,time.time()-start))
-            start=time.time()
+        if np.mod(frame+1, 100) == 0:
+            print('%i frames done. %s seconds.' % (int((frame+1)/100)*100, time.time()-start))
+            start = time.time()
 
     if not saveFile:
-            #return tgtAnimation, tgtSurface, srcAnimation, srcSurface, tgtAnimation_onlyInitial, egocoord
-            return tgtAnimation, tgtSurface, srcAnimation, srcSurface, None, egocoord
+        # TODO: This method used to have different returns (thus the 'None'). Clean it up later
+        return tgtAnimation, tgtSurface, srcAnimation, srcSurface, None, egocoord
 
-
-
+    # Save File ###################################################
     if not out_path:
         currentpath = os.path.dirname(os.path.realpath(__file__))
     else:
         currentpath = out_path
-    # # Save File ###################################################
     output_filename = source_filename[:-4] + '_retarget'
     of_aux = output_filename
     i = 0

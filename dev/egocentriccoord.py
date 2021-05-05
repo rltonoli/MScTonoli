@@ -8,11 +8,12 @@ Created on Thu Feb 21 21:44:27 2019
 import numpy as np
 import mathutils
 import time
-import skeletonmap
+
 
 class EgocentricCoordinate:
     """
-    Objects of this class holds the egocentric coordinates of a joint. It contains the joint, its name,
+    Egocentric coordinates for the right and left hand (may be also extended to support feet)
+    Objects of this class holds the egocentric coordinates of a joint. The objects contain the respective joint, its name,
     and a list of reference (length = frame) for the coordinates data of that joint for every frame.
     """
     egolist = []
@@ -22,104 +23,62 @@ class EgocentricCoordinate:
         self.name = joint.name
         self.egolist.append(self)
         self.target = []
-        
-        
+
         self.frame = frame
-        self.importance = [] #lambda
-        self.refpoint = [] #x
-        self.dispvector = [] #v
-        self.normcoef = [] #C
-        self.angle = [] #B
-        self.distroot = [] #path distance to root
-        self.triangle = [] #triangulo associado a essa coordenada
+        self.importance = []  # lambda
+        self.refpoint = []  # x
+        self.dispvector = []  # v
+        self.normcoef = []  # C
+        self.angle = []  # B
+        self.distroot = []  # path distance to root
+        self.triangle = []  # triangulo associado a essa coordenada
         self.normal = []
         self.targets = []
 
-        self.tau = []#debbug tau
-        self.ortho = [] #debbug importance
-        self.proxi = [] #debbug importance
-
-    # def reset(self):
-    #     """
-    #     Clear all the coordinate data of every frame, but not this class instance
-    #     """
-    #     self.framecoord = []
-
-    # def addCoordFrame(self, frame):
-    #     """
-    #     Create a CoordFrame object to hold the egocentric coordinate data for a new frame
-    #     """
-    #     coord = CoordFrame(frame)
-    #     self.framecoord.append(coord)
-    #     return coord
-
-    # def getCoordFrame(self, framedesired):
-    #     """
-    #     Return the CoordFrame object that holds the data in the frame desired
-    #     """
-    #     if self.framecoord[framedesired].frame == framedesired:
-    #         return self.framecoord[framedesired]
-    #     for coord in self.framecoord:
-    #         if coord.frame == framedesired:
-    #             return coord
+        self.tau = []  # debbug tau
+        self.ortho = []  # debbug importance
+        self.proxi = []  # debbug importance
 
     def getTarget(self, frame):
-        # coord = self.getCoordFrame(frame)
-        # if coord:
         return self.importance.dot(self.targets)
-        # else:
-        #     raise Exception('Egocentric Coordinates unavailable for this frame')
-
-    # @classmethod
-    # def getCoord(cls, jointname):
-    #     for ego in cls.egolist:
-    #         if jointname == ego.name:
-    #             return ego
-    #     print('Egocentric Coordinates not found')
 
     @classmethod
     def clean(cls):
         cls.egolist = []
 
 
-# class CoordFrame:
-
-    # def __init__(self, frame):
-        
-
-
 def getVectors(animation, frame):
-        """
-        Get vectors to calculate the kinematic path
+    """
+    Get vectors to calculate the kinematic path
 
-        :type animation: pyanimation.Animation
-        :param animation: Animation (skeleton) to get the distance between mapped joints
-        """
-        skmap = animation.getskeletonmap()
+    :type animation: pyanimation.Animation
+    :param animation: Animation (skeleton) to get the distance between mapped joints
+    """
+    skmap = animation.getskeletonmap()
 
-        lvec_fore = skmap.vecLForearm(frame)
-        rvec_fore = skmap.vecRForearm(frame)
+    lvec_fore = skmap.vecLForearm(frame)
+    rvec_fore = skmap.vecRForearm(frame)
 
-        lvec_arm = skmap.vecLArm(frame)
-        rvec_arm = skmap.vecRArm(frame)
+    lvec_arm = skmap.vecLArm(frame)
+    rvec_arm = skmap.vecRArm(frame)
 
-        lvec_clavicle = skmap.vecLClavicle(frame)
-        rvec_clavicle = skmap.vecRClavicle(frame)
+    lvec_clavicle = skmap.vecLClavicle(frame)
+    rvec_clavicle = skmap.vecRClavicle(frame)
 
-        vec_neck = skmap.vecNeck(frame)
+    vec_neck = skmap.vecNeck(frame)
 
-        vec_spine = skmap.vecSpine(frame)
+    vec_spine = skmap.vecSpine(frame)
 
-        lvec_femur = skmap.vecLFemur(frame)
-        rvec_femur = skmap.vecRFemur(frame)
+    lvec_femur = skmap.vecLFemur(frame)
+    rvec_femur = skmap.vecRFemur(frame)
 
-        lvec_upleg = skmap.vecLUpleg(frame)
-        rvec_upleg = skmap.vecRUpleg(frame)
+    lvec_upleg = skmap.vecLUpleg(frame)
+    rvec_upleg = skmap.vecRUpleg(frame)
 
-        lvec_lowleg = skmap.vecLLowleg(frame)
-        rvec_lowleg = skmap.vecRLowleg(frame)
+    lvec_lowleg = skmap.vecLLowleg(frame)
+    rvec_lowleg = skmap.vecRLowleg(frame)
 
-        return lvec_fore, rvec_fore, lvec_arm, rvec_arm, lvec_clavicle, rvec_clavicle, vec_neck, vec_spine, lvec_femur, rvec_femur, lvec_upleg, rvec_upleg, lvec_lowleg, rvec_lowleg
+    return lvec_fore, rvec_fore, lvec_arm, rvec_arm, lvec_clavicle, rvec_clavicle, vec_neck, vec_spine, lvec_femur, rvec_femur, lvec_upleg, rvec_upleg, lvec_lowleg, rvec_lowleg
 
 
 def getJointsPositions(animation, frame):
@@ -131,8 +90,8 @@ def getJointsPositions(animation, frame):
             positions.append(joint.getPosition(frame))
         else:
             positions.append(None)
-    #pos_hips, pos_spine, pos_spine1, pos_spine2, pos_spine3, pos_neck, pos_neck1, pos_head, pos_lshoulder,pos_larm, pos_lforearm, pos_lhand, pos_rshoulder, pos_rarm, pos_rforearm, pos_rhand, pos_lupleg, pos_llowleg, pos_lfoot, pos_rupleg, pos_rlowleg, pos_rfoot
-    #print(positions)
+    # pos_hips, pos_spine, pos_spine1, pos_spine2, pos_spine3, pos_neck, pos_neck1, pos_head, pos_lshoulder,pos_larm, pos_lforearm, pos_lhand, pos_rshoulder, pos_rarm, pos_rforearm, pos_rhand, pos_lupleg, pos_llowleg, pos_lfoot, pos_rupleg, pos_rlowleg, pos_rfoot
+    # print(positions)
     return positions
 
 def getMeshPositions(animation, surface, frame):
@@ -1581,7 +1540,7 @@ def GetEgocentricCoordinatesTargets(srcAnim, surfacesrcAnim, tgtAnim, surfacetgt
             if joint == rhand or joint == lhand or joint == rfoot or joint == lfoot:
                 angle,_ = mathutils.angleBetween(normal, jointSurfaceNormal)
                 ego.angle.append(angle)
-                
+
         #TODO: DEBUG
         #print('    mesh: %.4f seconds.' % (time.time()-start_aux))
 
@@ -1604,7 +1563,7 @@ def GetEgocentricCoordinatesTargets(srcAnim, surfacesrcAnim, tgtAnim, surfacetgt
                 ego.angle.append(angle)
         #TODO: DEBUG
         # print('    limb: %.4f seconds.' % (time.time()-start_aux))
-        
+
         #Add the ground projection as a reference point
         if joint == rfoot or joint == lfoot:
             refpoint = np.asarray([jointPosition[0], 0,jointPosition[2]])
@@ -1629,7 +1588,7 @@ def GetEgocentricCoordinatesTargets(srcAnim, surfacesrcAnim, tgtAnim, surfacetgt
         #Normaliza a importancia
         sumimp = sum(ego.importance)
         ego.importance = np.asarray([ego.importance[element]/sumimp for element in range(len(ego.importance))])
-        
+
     #TODO: DEBUG
     # print('  get: %.4f seconds.' % (time.time()-start))
 
@@ -1652,7 +1611,7 @@ def GetEgocentricCoordinatesTargets(srcAnim, surfacesrcAnim, tgtAnim, surfacetgt
         # aux_jointname = skeletonmap.getmatchingjoint(joint.name, srcAnim).name
         # ego = EgocentricCoordinate.egolist[egoindex].getCoordFrame(frame)
         ego = EgocentricCoordinate.egolist[egoindex]
-        
+
         #For each mesh triangle
         vec_displacement = []
         de_refpoint = []
@@ -1683,7 +1642,7 @@ def GetEgocentricCoordinatesTargets(srcAnim, surfacesrcAnim, tgtAnim, surfacetgt
                 elif joint == rfoot_ava: kinpath = np.asarray([rvec_femur, rvec_upleg, rvec_lowleg])
                 elif joint == llowleg_ava: kinpath = np.asarray([lvec_femur, lvec_upleg])
                 elif joint == rlowleg_ava: kinpath = np.asarray([rvec_femur, rvec_upleg])
-                
+
             # if  joint == rfoot_ava or joint == lfoot_ava:
             #     tau = (np.linalg.norm(kinpath, axis = 1)*ego.normcoef[i][:-1]).sum()
             #     vec_displacement_aux = ego.dispvector[i][:-1]*tau
@@ -1738,8 +1697,7 @@ def GetEgocentricCoordinatesTargets(srcAnim, surfacesrcAnim, tgtAnim, surfacetgt
 
 #        if frame>200:
 #            return ego.egolist, targets#, taulist, vec_displacement
-        
+
     #TODO: DEBUG
     # print('  set: %.4f seconds.' % (time.time()-start))
-    return ego.egolist#targets, taulist, vec_displacement
-
+    return ego.egolist  # targets, taulist, vec_displacement

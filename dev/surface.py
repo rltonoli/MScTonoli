@@ -427,8 +427,8 @@ def GetCalibrationFromBVHS(frontAnimName, headAnimName, backAnimName, savefile=T
         """
         jointTransform = jointlock.getGlobalTransform(frame)
         if handthick:
-            jointPosition = np.dot(jointTransform,[0,0,0,1])[:-1]
-            #Find parametric equation to remove hands surface (hand thickness)
+            jointPosition = np.dot(jointTransform, [0, 0, 0, 1])[:-1]
+            # Find parametric equation to remove hands surface (hand thickness)
             vec = jointPosition - pointpos
             distance = np.linalg.norm(vec)
             t = handthick/distance
@@ -440,7 +440,7 @@ def GetCalibrationFromBVHS(frontAnimName, headAnimName, backAnimName, savefile=T
         localTransform = np.dot(jointInverse, globalTransform)
         return localTransform
 
-    def getRadius(animation, jointlock, frame, pointpos, handthick = 3.5):
+    def getRadius(animation, jointlock, frame, pointpos, handthick=3.5):
         """
         Return the Radius of the limb, the distance between the surface point, p0,
         and the bone (vector from the jointlock, p1, to the jointlock's child, p2)
@@ -467,7 +467,7 @@ def GetCalibrationFromBVHS(frontAnimName, headAnimName, backAnimName, savefile=T
         p0p1 = p0-p1
         p0p2 = p0-p2
         p2p1 = p2-p1
-        d = np.linalg.norm(np.cross(p0p1,p0p2))/np.linalg.norm(p2p1)
+        d = np.linalg.norm(np.cross(p0p1, p0p2))/np.linalg.norm(p2p1)
         if handthick:
             d = d-3.5
         return d
@@ -482,10 +482,10 @@ def GetCalibrationFromBVHS(frontAnimName, headAnimName, backAnimName, savefile=T
     print('Reading first BVH file')
     animation = bvhsdk.ReadFile(arq)
     print('Getting first surface data')
-    right, left, rightrange, leftrange = FindHandsZeroSpeedGaps(animation, plot = debugmode, minrangewide = minrangewide, minpeakwide=minpeakwide)
+    right, left, rightrange, leftrange = FindHandsZeroSpeedGaps(animation, plot=debugmode, minrangewide=minrangewide, minpeakwide=minpeakwide)
     threshold = 0.9
     while len(right) < 14 and len(left) < 14:
-        right, left, rightrange, leftrange = FindHandsZeroSpeedGaps(animation, threshold, plot = debugmode, minrangewide = minrangewide, minpeakwide=minpeakwide)
+        right, left, rightrange, leftrange = FindHandsZeroSpeedGaps(animation, threshold, plot=debugmode, minrangewide=minrangewide, minpeakwide=minpeakwide)
         threshold = threshold - 0.1
     localTransforms = []
     radius = []
@@ -493,8 +493,7 @@ def GetCalibrationFromBVHS(frontAnimName, headAnimName, backAnimName, savefile=T
     skipleft = 0
     skipright = 0
 
-
-    #Starting at TPose, ignore index 0
+    # Starting at TPose, ignore index 0
     if debugmode:
         log.append('First BVH File')
         log.append('Right Hand Position in Gaps:')
@@ -502,99 +501,105 @@ def GetCalibrationFromBVHS(frontAnimName, headAnimName, backAnimName, savefile=T
         log.append('Left Hand Position in Gaps:')
         log = log + list(left)
         log.append('Right Hand Gaps Center:')
-        log = log + list(np.asarray(rightrange)[:,0])
+        log = log + list(np.asarray(rightrange)[:, 0])
         log.append('Left Hand Gaps Center:')
-        log = log + list(np.asarray(leftrange)[:,0])
+        log = log + list(np.asarray(leftrange)[:, 0])
         log.append('Right Hand Gaps Range:')
-        log = log + list(np.asarray(rightrange)[:,1])
+        log = log + list(np.asarray(rightrange)[:, 1])
         log.append('Left Hand Gaps Range:')
-        log = log + list(np.asarray(leftrange)[:,1])
+        log = log + list(np.asarray(leftrange)[:, 1])
         log.append('Starting analysis')
 
-    #Check if performer lowered his arm after the TPose (Rest Pose)
-    if max(right[1,:]) < max(animation.root.getPosition(frame=0)) or max(left[1,:]) < max(animation.root.getPosition(frame=0)):
+    # Check if performer lowered his arm after the TPose (Rest Pose)
+    if max(right[1, :]) < max(animation.root.getPosition(frame=0)) or max(left[1, :]) < max(animation.root.getPosition(frame=0)):
         right = np.delete(right, 1, 0)
         left = np.delete(left, 1, 0)
         rightrange = np.delete(rightrange, 1, 0)
         leftrange = np.delete(leftrange, 1, 0)
-        if debugmode: log.append('Rest Pose after TPose detected. Index 1 deleted.')
+        if debugmode:
+            log.append('Rest Pose after TPose detected. Index 1 deleted.')
 
-    #Chest Right
-    localTransforms.append(getLocalTransform(animation, animation.getskeletonmap().spine3, rightrange[1][0], right[1,:]))
-    if debugmode: log.append('Chest Right Position: %s. Frame: %f.'% (right[1,:], rightrange[1][0]))
-    #Chest Left
-    localTransforms.append(getLocalTransform(animation, animation.getskeletonmap().spine3, leftrange[1][0], left[1,:]))
-    if debugmode: log.append('Chest Left Position: %s. Frame: %f'% (left[1,:], leftrange[1][0]))
-    #Abdomen Right
-    localTransforms.append(getLocalTransform(animation, animation.getskeletonmap().spine, rightrange[2][0], right[2,:]))
-    if debugmode: log.append('Abdomen Right Position: %s. Frame: %f'% (right[2,:], rightrange[2][0]))
-    #Abdomen Left
-    localTransforms.append(getLocalTransform(animation, animation.getskeletonmap().spine, leftrange[2][0], left[2,:]))
-    if debugmode: log.append('Abdomen Left Position: %s. Frame: %f'% (left[2,:], leftrange[2][0]))
-    #Hip Right
-    localTransforms.append(getLocalTransform(animation, animation.getskeletonmap().hips, rightrange[3][0], right[3,:]))
-    if debugmode: log.append('Hip Right Position: %s. Frame: %f'% (right[3,:], rightrange[3][0]))
-    #Hip Left
-    localTransforms.append(getLocalTransform(animation, animation.getskeletonmap().hips, leftrange[3][0], left[3,:]))
-    if debugmode: log.append('Hip Left Position: %s. Frame: %f'% (left[3,:], leftrange[3][0]))
-    #Thigh Right
-    radius.append(getRadius(animation, animation.getskeletonmap().rupleg, rightrange[4][0], right[4,:]))
-    if debugmode: log.append('Thigh Right Position: %s. Frame: %f'% (right[4,:], rightrange[4][0]))
-    #Thigh Left
-    radius.append(getRadius(animation, animation.getskeletonmap().lupleg, leftrange[4][0], left[4,:]))
-    if debugmode: log.append('Thigh Left Position: %s. Frame: %f'% (left[4,:], leftrange[4][0]))
-    #Shin Right
-    radius.append(getRadius(animation, animation.getskeletonmap().rlowleg, rightrange[5][0], right[5,:]))
-    if debugmode: log.append('Shin Right Position: %s. Frame: %f'% (right[5,:], rightrange[5][0]))
-    #Shin Left
-    radius.append(getRadius(animation, animation.getskeletonmap().llowleg, leftrange[5][0], left[5,:]))
-    if debugmode: log.append('Shin Left Position: %s. Frame: %f'% (left[5,:], leftrange[5][0]))
+    # Chest Right
+    localTransforms.append(getLocalTransform(animation, animation.getskeletonmap().spine3, rightrange[1][0], right[1, :]))
+    # Chest Left
+    localTransforms.append(getLocalTransform(animation, animation.getskeletonmap().spine3, leftrange[1][0], left[1, :]))
+    # Abdomen Right
+    localTransforms.append(getLocalTransform(animation, animation.getskeletonmap().spine, rightrange[2][0], right[2, :]))
+    # Abdomen Left
+    localTransforms.append(getLocalTransform(animation, animation.getskeletonmap().spine, leftrange[2][0], left[2, :]))
+    # Hip Right
+    localTransforms.append(getLocalTransform(animation, animation.getskeletonmap().hips, rightrange[3][0], right[3, :]))
+    # Hip Left
+    localTransforms.append(getLocalTransform(animation, animation.getskeletonmap().hips, leftrange[3][0], left[3, :]))
+    # Thigh Right
+    radius.append(getRadius(animation, animation.getskeletonmap().rupleg, rightrange[4][0], right[4, :]))
+    # Thigh Left
+    radius.append(getRadius(animation, animation.getskeletonmap().lupleg, leftrange[4][0], left[4, :]))
+    # Shin Right
+    radius.append(getRadius(animation, animation.getskeletonmap().rlowleg, rightrange[5][0], right[5, :]))
+    # Shin Left
+    radius.append(getRadius(animation, animation.getskeletonmap().llowleg, leftrange[5][0], left[5, :]))
 
-    #Rest Pose
-    if max(right[6,:]) < max(animation.root.getPosition(frame=0)) or max(left[6,:]) < max(animation.root.getPosition(frame=0)):
+    if debugmode:
+        log.append('Chest Right Position: %s. Frame: %f.' % (right[1, :], rightrange[1][0]))
+        log.append('Chest Left Position: %s. Frame: %f' % (left[1, :], leftrange[1][0]))
+        log.append('Abdomen Right Position: %s. Frame: %f' % (right[2, :], rightrange[2][0]))
+        log.append('Abdomen Left Position: %s. Frame: %f' % (left[2, :], leftrange[2][0]))
+        log.append('Hip Right Position: %s. Frame: %f' % (right[3, :], rightrange[3][0]))
+        log.append('Hip Left Position: %s. Frame: %f' % (left[3, :], leftrange[3][0]))
+        log.append('Thigh Right Position: %s. Frame: %f' % (right[4, :], rightrange[4][0]))
+        log.append('Thigh Left Position: %s. Frame: %f' % (left[4, :], leftrange[4][0]))
+        log.append('Shin Right Position: %s. Frame: %f' % (right[5, :], rightrange[5][0]))
+        log.append('Shin Left Position: %s. Frame: %f' % (left[5, :], leftrange[5][0]))
+
+    # Rest Pose
+    if max(right[6, :]) < max(animation.root.getPosition(frame=0)) or max(left[6, :]) < max(animation.root.getPosition(frame=0)):
         skipright = skipright + 1
 
-    #Abdomen Up
-    if len(right)>len(left):
-     #Check which hand was used to touch the surface. The hand used will have more gaps
-        #Right Hand used
-        localTransforms.append(getLocalTransform(animation, animation.getskeletonmap().spine2, rightrange[6+skipright][0], right[6+skipright,:]))
-        if debugmode: log.append('Abdomen Up Position: %s. Frame: %f. Index: %i. Right Hand used.'% (right[6+skipright,:], rightrange[6+skipright][0], 6+skipright))
+    # Abdomen Up
+    if len(right) > len(left):
+        # Check which hand was used to touch the surface. The hand used will have more gaps
+        # Right Hand used
+        localTransforms.append(getLocalTransform(animation, animation.getskeletonmap().spine2, rightrange[6+skipright][0], right[6+skipright, :]))
+        if debugmode:
+            log.append('Abdomen Up Position: %s. Frame: %f. Index: %i. Right Hand used.' % (right[6+skipright, :], rightrange[6+skipright][0], 6+skipright))
         skipright = skipright + 1
     else:
-        #Left Hand used
-        localTransforms.append(getLocalTransform(animation, animation.getskeletonmap().spine2, leftrange[6+skipleft][0], left[6+skipleft,:]))
-        if debugmode: log.append('Abdomen Up Position: %s. Frame: %f. Index: %i. Left Hand used.'% (left[6+skipleft,:], leftrange[6+skipleft][0], 6+skipleft))
+        # Left Hand used
+        localTransforms.append(getLocalTransform(animation, animation.getskeletonmap().spine2, leftrange[6+skipleft][0], left[6+skipleft, :]))
+        if debugmode:
+            log.append('Abdomen Up Position: %s. Frame: %f. Index: %i. Left Hand used.' % (left[6+skipleft, :], leftrange[6+skipleft][0], 6+skipleft))
         skipleft = skipleft + 1
 
-    #Rest Pose
-
-    #Arms Up
+    # Rest Pose
+    # Arms Up
     skipright = skipright + 1
     skipleft = skipleft + 1
 
     if rightrange[7+skipright][1] > leftrange[7+skipleft][1]:
-#    #Check which hand was calibrated first, i.e., if the right hand has a bigger gap, it was steady
-#    #being calibrated (while the left hand was moving to touch the surface of the right arm)
-#    #Note: The right hand is used to calibrate the left arm and vice-versa
-#        #First Left Hand used to calibrate Right Arm
+        # Check which hand was calibrated first, i.e., if the right hand has a bigger gap, it was steady
+        # being calibrated (while the left hand was moving to touch the surface of the right arm)
+        # Note: The right hand is used to calibrate the left arm and vice-versa
+        # First Left Hand used to calibrate Right Arm
         skipright = skipright + 1
-        if debugmode: log.append('Calibrating Right Arm first. Using Left Hand')
+        if debugmode:
+            log.append('Calibrating Right Arm first. Using Left Hand')
     else:
-#        #First Right Hand used to calibrate Left Arm
-        if debugmode: log.append('Calibrating Left Arm first. Using Right Hand')
+        # First Right Hand used to calibrate Left Arm
+        if debugmode:
+            log.append('Calibrating Left Arm first. Using Right Hand')
         skipleft = skipleft + 1
 
-    #Arm Right (calibrated using left hand)
+    # Arm Right (calibrated using left hand)
     radius.append(getRadius(animation, animation.getskeletonmap().rarm, leftrange[7+skipleft][0], left[7+skipleft,:]))
     if debugmode: log.append('Arm Right Position: %s. Frame: %f. Index: %i'% (left[7+skipleft,:], leftrange[7+skipleft][0], 7+skipleft))
-    #ForeArm Right (calibrated using left hand)
+    # ForeArm Right (calibrated using left hand)
     radius.append(getRadius(animation, animation.getskeletonmap().rforearm, leftrange[8+skipleft][0], left[8+skipleft,:]))
     if debugmode: log.append('ForeArm Right Position: %s. Frame: %f. Index: %i'% (left[8+skipleft,:], leftrange[8+skipleft][0], 8+skipleft))
-    #Arm Left (calibrated using right hand)
+    # Arm Left (calibrated using right hand)
     radius.append(getRadius(animation, animation.getskeletonmap().larm, rightrange[7+skipright][0], right[7+skipright,:]))
     if debugmode: log.append('Arm Left Position: %s. Frame: %f. Index: %i'% (right[7+skipright,:], rightrange[7+skipright][0], 7+skipright))
-    #ForeArm Left (calibrated using right hand)
+    # ForeArm Left (calibrated using right hand)
     radius.append(getRadius(animation, animation.getskeletonmap().lforearm, rightrange[8+skipright][0], right[8+skipright,:]))
     if debugmode: log.append('ForeArm Left Position: %s. Frame: %f. Index: %i'% (right[8+skipright,:], rightrange[8+skipright][0], 8+skipright))
 
@@ -640,29 +645,29 @@ def GetCalibrationFromBVHS(frontAnimName, headAnimName, backAnimName, savefile=T
         leftrange = np.delete(leftrange, 1, 0)
         if debugmode: log.append('Rest Pose after TPose detected. Index 1 deleted.')
 
-    #Head Right
-    localTransforms.append(getLocalTransform(animation, animation.getskeletonmap().head, rightrange[1][0], right[1,:]))
+    # Head Right
+    localTransforms.append(getLocalTransform(animation, animation.getskeletonmap().head, rightrange[1][0], right[1, :]))
     if debugmode: log.append('Head Right Position: %s. Frame: %f.'% (right[1,:], rightrange[1][0]))
-    #Head Left
-    localTransforms.append(getLocalTransform(animation, animation.getskeletonmap().head, leftrange[1][0], left[1,:]))
+    # Head Left
+    localTransforms.append(getLocalTransform(animation, animation.getskeletonmap().head, leftrange[1][0], left[1, :]))
     if debugmode: log.append('Head Left Position: %s. Frame: %f'% (left[1,:], leftrange[1][0]))
-    #Ear Right
-    localTransforms.append(getLocalTransform(animation, animation.getskeletonmap().head, rightrange[2][0], right[2,:]))
+    # Ear Right
+    localTransforms.append(getLocalTransform(animation, animation.getskeletonmap().head, rightrange[2][0], right[2, :]))
     if debugmode: log.append('Ear Right Position: %s. Frame: %f.'% (right[2,:], rightrange[2][0]))
-    #Ear Left
-    localTransforms.append(getLocalTransform(animation, animation.getskeletonmap().head, leftrange[2][0], left[2,:]))
+    # Ear Left
+    localTransforms.append(getLocalTransform(animation, animation.getskeletonmap().head, leftrange[2][0], left[2, :]))
     if debugmode: log.append('Ear Left Position: %s. Frame: %f'% (left[2,:], leftrange[2][0]))
-    #Chin Right
-    localTransforms.append(getLocalTransform(animation, animation.getskeletonmap().head, rightrange[3][0], right[3,:]))
+    # Chin Right
+    localTransforms.append(getLocalTransform(animation, animation.getskeletonmap().head, rightrange[3][0], right[3, :]))
     if debugmode: log.append('Chin Right Position: %s. Frame: %f.'% (right[3,:], rightrange[3][0]))
-    #Chin Left
-    localTransforms.append(getLocalTransform(animation, animation.getskeletonmap().head, leftrange[3][0], left[3,:]))
+    # Chin Left
+    localTransforms.append(getLocalTransform(animation, animation.getskeletonmap().head, leftrange[3][0], left[3, :]))
     if debugmode: log.append('Chin Left Position: %s. Frame: %f'% (left[3,:], leftrange[3][0]))
-    #Cheek Right
-    localTransforms.append(getLocalTransform(animation, animation.getskeletonmap().head, rightrange[4][0], right[4,:]))
+    # Cheek Right
+    localTransforms.append(getLocalTransform(animation, animation.getskeletonmap().head, rightrange[4][0], right[4, :]))
     if debugmode: log.append('Cheek Right Position: %s. Frame: %f.'% (right[4,:], rightrange[4][0]))
-    #Cheek Left
-    localTransforms.append(getLocalTransform(animation, animation.getskeletonmap().head, leftrange[4][0], left[4,:]))
+    # Cheek Left
+    localTransforms.append(getLocalTransform(animation, animation.getskeletonmap().head, leftrange[4][0], left[4, :]))
     if debugmode: log.append('Cheek Left Position: %s. Frame: %f'% (left[4,:], leftrange[4][0]))
 
     print( len(right) )
@@ -806,24 +811,24 @@ def GetCalibrationFromBVHS(frontAnimName, headAnimName, backAnimName, savefile=T
                 print(log[i], file=text_file)
 
 
-def GetMoCapSurfaceFromTXT(path=None, highpolymesh = True, minradius = True):
-    if path==None:
+def GetMoCapSurfaceFromTXT(path=None, highpolymesh=True, minradius=True):
+    if path:
         realpath = os.path.dirname(os.path.realpath(__file__))
         path = os.path.join(realpath, 'surface.txt')
     try:
         with open(path, "r") as file:
-            data = [np.asarray(line.replace('\n', '').split(','), dtype='float') if len(line.split(','))>1 else float(line.replace('\n', '')) for line in file]
+            data = [np.asarray(line.replace('\n', '').split(','), dtype='float') if len(line.split(',')) > 1 else float(line.replace('\n', '')) for line in file]
     except FileNotFoundError as e:
-        print('Invalid path provided or surface.txt not found in %s.\nError: %s.' % (path,str(e)))
+        print('Invalid path provided or surface.txt not found in %s.\nError: %s.' % (path, str(e)))
         return None
     mocapSurface = Surface('MoCap', highpolymesh=highpolymesh)
-    for point,i in zip(mocapSurface.points, range(len(mocapSurface.points))):
-        if type(data[i])==float:
+    for point, i in zip(mocapSurface.points, range(len(mocapSurface.points))):
+        if type(data[i]) == float:
             point.radius = data[i]
         else:
-            point.calibrationLocalTransform = np.asarray([[data[i][j*4],data[i][j*4+1],data[i][j*4+2],data[i][j*4+3]] for j in range(4)])
+            point.calibrationLocalTransform = np.asarray([[data[i][j*4], data[i][j*4+1], data[i][j*4+2], data[i][j*4+3]] for j in range(4)])
     if minradius:
-        limbnames = [['thightRight', 'thightLeft'], ['shinRight', 'shinLeft'],['armRight', 'armLeft'],['foreRight', 'foreLeft']]
+        limbnames = [['thightRight', 'thightLeft'], ['shinRight', 'shinLeft'], ['armRight', 'armLeft'], ['foreRight', 'foreLeft']]
         for limb in limbnames:
             right = mocapSurface.getPoint(limb[0])
             left = mocapSurface.getPoint(limb[1])
@@ -834,20 +839,20 @@ def GetMoCapSurfaceFromTXT(path=None, highpolymesh = True, minradius = True):
     return mocapSurface
 
 
-def GetAvatarSurfaceFromCSV(path, highpolymesh = True):
+def GetAvatarSurfaceFromCSV(path, highpolymesh=True):
     try:
         with open(path, "r") as file:
-            data = [np.asarray(line.replace('\n', '').split(','), dtype='float') if len(line.split(','))>1 else float(line.replace('\n', '')) for line in file]
+            data = [np.asarray(line.replace('\n', '').split(','), dtype='float') if len(line.split(',')) > 1 else float(line.replace('\n', '')) for line in file]
     except FileNotFoundError as e:
-        print('Invalid path provided or surface file not found in %s.\nError: %s.' % (path,str(e)))
+        print('Invalid path provided or surface file not found in %s.\nError: %s.' % (path, str(e)))
         return None
     avatarSurface = Surface('Avatar', highpolymesh=highpolymesh)
-    for point,i in zip(avatarSurface.points, range(len(avatarSurface.points))):
-        if type(data[i])==float:
+    for point, i in zip(avatarSurface.points, range(len(avatarSurface.points))):
+        if type(data[i]) == float:
             point.radius = data[i]
         else:
-            point.baseposition = np.asarray(data[i],dtype='float')
-    avatarSurface.avatarHipsbaseposition = np.asarray(data[i+1],dtype='float')
+            point.baseposition = np.asarray(data[i], dtype='float')
+    avatarSurface.avatarHipsbaseposition = np.asarray(data[i+1], dtype='float')
     return avatarSurface
 
 
@@ -856,7 +861,7 @@ def GetAvatarSurfaceLocalTransform(avatar, avatarSurface):
     Pega a local baseado na animação com um frame da TPose
     """
     for point in avatarSurface.points:
-        if point.pointtype=='mesh':
+        if point.pointtype == 'mesh':
             joint = skeletonmap.getmatchingjoint(point.jointlock, avatar)
             if not joint:
                 print('Something went wrong in retarget.GetAvatarSurfaceLocalTransform()')
@@ -864,16 +869,17 @@ def GetAvatarSurfaceLocalTransform(avatar, avatarSurface):
             else:
                 globalTransform = mathutils.matrixTranslation(point.baseposition[0], point.baseposition[1], point.baseposition[2])
                 parentInverse = mathutils.inverseMatrix(joint.getGlobalTransform(frame=0))
-                point.calibrationLocalTransform = np.dot(parentInverse,globalTransform)
+                point.calibrationLocalTransform = np.dot(parentInverse, globalTransform)
             joint = None
+
 
 def AvatarSurfacePositionEstimation(avatar, avatarSurface):
     """
-    Estima a posição da superfície baseado na transformada local calculada em
-    GetAvatarSurfaceLocalTransform()
+    Estimates the position of the surface points based on the local transform based on GetAvatarSurfaceLocalTransform()
     """
+    print('DO NOT USE THIS FUNCTION. AvatarSurfacePositionEstimation is depreciated.')
     for point in avatarSurface.points:
-        if point.pointtype=='mesh':
+        if point.pointtype == 'mesh':
             joint = skeletonmap.getmatchingjoint(point.jointlock, avatar)
             if not joint:
                 print('Something went wrong in retarget.AvatarSurfacePositionEstimation()')
@@ -881,42 +887,37 @@ def AvatarSurfacePositionEstimation(avatar, avatarSurface):
             else:
                 for frame in range(avatar.frames):
                     globalPointTransform = np.dot(joint.getGlobalTransform(frame=frame), point.calibrationLocalTransform)
-                    point.position.append(np.dot(globalPointTransform,[0,0,0,1]))
+                    point.position.append(np.dot(globalPointTransform, [0, 0, 0, 1]))
 
 
-
-
-
-
-
-#SurfacePoints('chestRight', 'mesh', 'Spine3')
-#SurfacePoints('chestLeft', 'mesh', 'Spine3')
-#SurfacePoints('abdomenRight', 'mesh', 'Spine')
-#SurfacePoints('abdomenLeft', 'mesh', 'Spine')
-#SurfacePoints('hipRight', 'mesh', 'Hips')
-#SurfacePoints('hipLeft', 'mesh', 'Hips')
-#SurfacePoints('thightRight', 'limb', 'RightUpLeg')
-#SurfacePoints('thightLeft', 'limb', 'LeftUpLeg')
-#SurfacePoints('shinRight', 'limb', 'RightLeg')
-#SurfacePoints('shinLeft', 'limb', 'LeftLeg')
-#SurfacePoints('abdomenUp', 'mesh', 'Spine2')
-#SurfacePoints('armRight', 'limb', 'RightArm')
-#SurfacePoints('foreRight', 'limb', 'RightForeArm')
-#SurfacePoints('armLeft', 'limb', 'LeftArm')
-#SurfacePoints('foreLeft', 'limb', 'LeftForeArm')
-#SurfacePoints('headRight', 'mesh', 'Head')
-#SurfacePoints('headLeft', 'mesh', 'Head')
-#SurfacePoints('earRight', 'mesh', 'Head')
-#SurfacePoints('earLeft', 'mesh', 'Head')
-#SurfacePoints('chinRight', 'mesh', 'Head')
-#SurfacePoints('chinLeft', 'mesh', 'Head')
-#SurfacePoints('cheekRight', 'mesh', 'Head')
-#SurfacePoints('cheekLeft', 'mesh', 'Head')
-#SurfacePoints('mouth', 'mesh', 'Head')
-#SurfacePoints('foreHead', 'mesh', 'Head')
-#SurfacePoints('backHeadRight', 'mesh', 'Head')
-#SurfacePoints('backHeadLeft', 'mesh', 'Head')
-#SurfacePoints('backHead', 'mesh', 'Head')
-#SurfacePoints('loinRight', 'mesh', 'Hips')
-#SurfacePoints('loinLeft', 'mesh', 'Hips')
-#SurfacePoints('loinUp', 'mesh', 'Spine1')
+# SurfacePoints('chestRight', 'mesh', 'Spine3')
+# SurfacePoints('chestLeft', 'mesh', 'Spine3')
+# SurfacePoints('abdomenRight', 'mesh', 'Spine')
+# SurfacePoints('abdomenLeft', 'mesh', 'Spine')
+# SurfacePoints('hipRight', 'mesh', 'Hips')
+# SurfacePoints('hipLeft', 'mesh', 'Hips')
+# SurfacePoints('thightRight', 'limb', 'RightUpLeg')
+# SurfacePoints('thightLeft', 'limb', 'LeftUpLeg')
+# SurfacePoints('shinRight', 'limb', 'RightLeg')
+# SurfacePoints('shinLeft', 'limb', 'LeftLeg')
+# SurfacePoints('abdomenUp', 'mesh', 'Spine2')
+# SurfacePoints('armRight', 'limb', 'RightArm')
+# SurfacePoints('foreRight', 'limb', 'RightForeArm')
+# SurfacePoints('armLeft', 'limb', 'LeftArm')
+# SurfacePoints('foreLeft', 'limb', 'LeftForeArm')
+# SurfacePoints('headRight', 'mesh', 'Head')
+# SurfacePoints('headLeft', 'mesh', 'Head')
+# SurfacePoints('earRight', 'mesh', 'Head')
+# SurfacePoints('earLeft', 'mesh', 'Head')
+# SurfacePoints('chinRight', 'mesh', 'Head')
+# SurfacePoints('chinLeft', 'mesh', 'Head')
+# SurfacePoints('cheekRight', 'mesh', 'Head')
+# SurfacePoints('cheekLeft', 'mesh', 'Head')
+# SurfacePoints('mouth', 'mesh', 'Head')
+# SurfacePoints('foreHead', 'mesh', 'Head')
+# SurfacePoints('backHeadRight', 'mesh', 'Head')
+# SurfacePoints('backHeadLeft', 'mesh', 'Head')
+# SurfacePoints('backHead', 'mesh', 'Head')
+# SurfacePoints('loinRight', 'mesh', 'Hips')
+# SurfacePoints('loinLeft', 'mesh', 'Hips')
+# SurfacePoints('loinUp', 'mesh', 'Spine1')
