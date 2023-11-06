@@ -11,7 +11,7 @@ This work proposes the motion retargeting of motion capture data to 3D character
 Motion capture (mocap) is a digital animation technique. Mocap systems capture the live performance of an actor and animate a 3D character using the recorded motion. Most systems use a set of infrared cameras to track the position over time of reflective markers placed on the body surface of the performer. Mocap systems are known for tracking motion with high accuracy.
 <br />
 <br />
-When working with mocap, a typical problem occurs when the performer proportions are too different from the virtual character. For example, when the movements of a skinny actress must be transferred to a fat ogress. Applying the animation sequence in a 3D character with different body proportions and body shapes may result in an odd-looking, unnatural motion. As the example on the right, the same motion (center) is applied to two characters, one is a small goblin (left), and the other is a tall soldier (right). Notice the different places that their hands touch (or don't touch) their bodies.
+When working with mocap, a typical problem occurs when the performer proportions are too different from the virtual character. For example, when the movements of a skinny actress must be transferred to a fat ogress. Applying the animation sequence in a 3D character with different body proportions and body shapes may result in an odd-looking, unnatural motion. As the example on the video (link below), the same motion (center) is applied to two characters, one is a small goblin (left), and the other is a tall soldier (right). Notice the different places that their hands touch (or don't touch) their bodies.
 
 [Youtube video](https://www.youtube.com/watch?v=6klk4lU98R4)
 
