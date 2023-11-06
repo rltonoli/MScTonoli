@@ -13,8 +13,7 @@ Motion capture (mocap) is a digital animation technique. Mocap systems capture t
 <br />
 When working with mocap, a typical problem occurs when the performer proportions are too different from the virtual character. For example, when the movements of a skinny actress must be transferred to a fat ogress. Applying the animation sequence in a 3D character with different body proportions and body shapes may result in an odd-looking, unnatural motion. As the example on the right, the same motion (center) is applied to two characters, one is a small goblin (left), and the other is a tall soldier (right). Notice the different places that their hands touch (or don't touch) their bodies.
 
-<iframe style="padding-left: 100px;" width="560" height="315" src="https://www.youtube.com/embed/6klk4lU98R4" frameborder="0" allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
-
+[Youtube video](https://www.youtube.com/watch?v=6klk4lU98R4)
 
 ### **Adopted Method**
 
@@ -39,6 +38,7 @@ In summary, the proposed method includes four steps:
 <img src="_figs/calibracao1.png" width="50%" alt="portrait">
 
 Some body surfaces obtained during the project, the second and third ones belong to virtual characters, the others are from a human performer:
+
 <img src="_figs/surface1.png" width="70%" alt="portrait">
 
 **(Step 3)** A correspondence between joints of the skeletons is mandatory to identify which joints from the target (character) skeleton should mimic the motion from the source (mocap) skeleton. This step is useful to map joints correctly and to perform the motion retargeting
@@ -72,7 +72,6 @@ Example of an animation presented during the perceptual evaluation (zoomed figur
 
 **References**
 
-{: style="text-align: justify; " }
 [1] Monzani, Jean‐Sébastien, Paolo Baerlocher, Ronan Boulic, and Daniel Thalmann. "Using an intermediate skeleton and inverse kinematics for motion retargeting." In Computer Graphics Forum, vol. 19, no. 3, pp. 11-19. Oxford, UK and Boston, USA: Blackwell Publishers Ltd, 2000.
 <br />
 <br />
